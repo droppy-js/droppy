@@ -89,10 +89,12 @@ $ npm install -g @droppyjs/cli
 
 ### Docker installation :whale:
 
-**Note: The current Dockerfile is broken. Please do not use this yet.**
+We currently publish our images to `ghcr.io/droppyjs/droppy`. You can bind columnes /data and /config should you need. 
+
 ### docker-compose
 
-**Note: The current Dockerfile is broken. Please do not use this yet.**
+A sample docker-composer file can be found here: https://github.com/droppyjs/droppy/blob/canary/examples/docker-compose.yml
+
 ### Caddy
 
 See the example [Caddyfile](examples/Caddyfile).
