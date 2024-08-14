@@ -16,11 +16,11 @@ droppy_download () {
 
     echo "Downloading: $DOWNLOAD_URL";
     echo " to: $DOWNLOAD_URL";
-    
+
     if [ -x "$(command -v curl)" ]; then
         curl -o "$TARGET_PATH" "$DOWNLOAD_URL"
     elif [ -x "$(command -v wget)" ]; then
-        wget -O "$TARGET_PATH" "$DOWNLOAD_URL" 
+        wget -O "$TARGET_PATH" "$DOWNLOAD_URL"
     else
         echo "no download util found, please install curl or wget.";
         exit 1;
@@ -34,7 +34,7 @@ SYSTEMD_SERVICE="https://raw.githubusercontent.com/droppyjs/droppy/canary/exampl
 INITD_SERVICE="https://raw.githubusercontent.com/droppyjs/droppy/canary/examples/droppy.init.d"
 #LAUNCHCTL_SERVICE="https://raw.githubusercontent.com/droppyjs/droppy/canary/examples/com.droppyjs.plist"
 
-VALID_PACKAGE_MANAGERS=( "yarn"  "npm" )
+VALID_PACKAGE_MANAGERS=( "yarn" "npm" "pnpm" )
 VALID_SERVICE_MANAGERS=( "systemd" "initd" "none" )
 
 echo ""
@@ -70,8 +70,10 @@ if [ -x "$(command -v yarn)" ]; then
     PACKAGE_MANAGER_DEFAULT="yarn"
 elif [ -x "$(command -v npm)" ]; then
     PACKAGE_MANAGER_DEFAULT="npm"
+elif [ -x "$(command -v pnpm)" ]; then
+    PACKAGE_MANAGER_DEFAULT="pnpm"
 else
-    echo "yarn and npm are not in your path.";
+    echo "yarn, npm, and pnpm are not in your path.";
     exit 1;
 fi
 
@@ -99,23 +101,22 @@ files_directory=${files_directory:-"$FILES_DIRECTORY_DEFAULT"}
 
 # Select a valid package manager
 selected_package_manager=""
-until [ "$selected_package_manager" != "" ] 
+until [ "$selected_package_manager" != "" ]
 do
-    read -p "Package manager (yarn or npm) [$PACKAGE_MANAGER_DEFAULT]: " selected_package_manager
+    read -p "Package manager (yarn, npm, or pnpm) [$PACKAGE_MANAGER_DEFAULT]: " selected_package_manager
     selected_package_manager=${selected_package_manager:-"$PACKAGE_MANAGER_DEFAULT"}
-    echo "${VALID_PACKAGE_MANAGERS[@]}"
     if [[ ! " ${VALID_PACKAGE_MANAGERS[@]} " =~ " ${selected_package_manager} " ]]; then
         echo "err: $selected_package_manager is not a valid option."
         selected_package_manager=""
     else
         package_manager="$selected_package_manager"
     fi
-done 
+done
 
 
 # Select a valid service manager
 selected_service_manager=""
-until [ "$selected_service_manager" != "" ] 
+until [ "$selected_service_manager" != "" ]
 do
     read -p "Service manager (none, systemd, or initd) [$SERVICE_MANAGE_DEFAULT]: " selected_service_manager
     selected_service_manager=${selected_service_manager:-"$SERVICE_MANAGE_DEFAULT"}
@@ -125,7 +126,7 @@ do
     else
         service_manager="$selected_service_manager"
     fi
-done 
+done
 
 
 echo "";
@@ -139,10 +140,15 @@ echo "Starting installation in 3 seconds ...";
 echo "";
 sleep 3
 
-if [ $PACKAGE_MANAGER_DEFAULT = "yarn" ]; then
+if [ $package_manager = "yarn" ]; then
+    echo "Installing with yarn ..."
     yarn global add @droppyjs/cli
-elif [  $PACKAGE_MANAGER_DEFAULT = "npm" ]; then
+elif [  $package_manager = "npm" ]; then
+    echo "Installing with npm ..."
     npm install -g @droppyjs/cli
+elif [  $package_manager = "pnpm" ]; then
+    echo "Installing with pnpm ..."
+    pnpm add -g @droppyjs/cli
 else
     echo "unknown package manager $PACKAGE_MANAGER_DEFAULT";
     exit 1;
@@ -156,7 +162,7 @@ fi
 if [ $service_manager = "systemd" ]; then
     droppy_download "$SYSTEMD_SERVICE" "/tmp/droppy.service.template"
 
-    sed -i.bak -e  "s|$CONFIG_DIRECTORY_DEFAULT|$config_directory|g" /tmp/droppy.service.template 
+    sed -i.bak -e  "s|$CONFIG_DIRECTORY_DEFAULT|$config_directory|g" /tmp/droppy.service.template
     sed -i.bak -e  "s|$FILES_DIRECTORY_DEFAULT|$files_directory|g" /tmp/droppy.service.template
 
     rm -f /tmp/droppy.service.template.bak
@@ -180,7 +186,7 @@ elif [ $service_manager = "initd" ]; then
 
     droppy_download "$INITD_SERVICE" "/tmp/droppy.init.d.template"
 
-    sed -i.bak -e  "s|$CONFIG_DIRECTORY_DEFAULT|$config_directory|g" /tmp/droppy.init.d.template 
+    sed -i.bak -e  "s|$CONFIG_DIRECTORY_DEFAULT|$config_directory|g" /tmp/droppy.init.d.template
     sed -i.bak -e  "s|$FILES_DIRECTORY_DEFAULT|$files_directory|g" /tmp/droppy.init.d.template
 
     rm -f /tmp/droppy.init.d.template.bak
@@ -198,7 +204,7 @@ elif [ $service_manager = "initd" ]; then
 
     if [ $start_now = "yes" ]; then
 
-        service droppy start 
+        service droppy start
 
     fi
 
@@ -237,7 +243,7 @@ elif [ $service_manager = "launchctl-do-not-use" ]; then
     sed -i.bak -e  "s|$FILES_DIRECTORY_DEFAULT|$files_directory|g" /tmp/com.droppy.plist.template
     sed -i.bak -e  "s|<string>droppy start|<string>$droppy start|g" /tmp/com.droppy.plist.template
 
-# 
+#
     rm -f /tmp/com.droppy.plist.template.bak
 
     echo "Moving /tmp/com.droppy.plist.template to /Library/LaunchDaemons/com.droppy.plist"
@@ -256,3 +262,5 @@ elif [ $service_manager = "launchctl-do-not-use" ]; then
 else
     echo "no service found or used";
 fi
+
+droppy
