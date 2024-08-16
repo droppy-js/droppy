@@ -10,8 +10,8 @@ const mimeTypes = require("mime-types");
 const mv = require("mv");
 const path = require("path");
 const util = require("util");
-const validate = require("valid-filename");
-const {mkdir, stat, lstat, copyFile, readdir, access} = require("fs").promises;
+const {mkdir, stat, lstat, copyFile, readdir, access} =
+  require("fs").promises;
 
 const paths = require("./paths.js");
 
@@ -26,8 +26,36 @@ const overrideMimeTypes = {
   "video/x-matroska": "video/webm",
 };
 
+// Regex referenced from https://github.com/sindresorhus/filename-reserved-regex
+// Copyright (c) Sindre Sorhus <sindresorhus@gmail.com>
+// LICENSE: https://github.com/sindresorhus/filename-reserved-regex/blob/main/license
+const filenameReservedRegex = /[<>:"/\\|?*\u0000-\u001F]/g;
+const windowsReservedNameRegex = /^(con|prn|aux|nul|com\d|lpt\d)$/i;
+
+// Function referenced from https://github.com/sindresorhus/valid-filename
+// Copyright (c) Sindre Sorhus <sindresorhus@gmail.com>
+// LICENSE: https://github.com/sindresorhus/valid-filename/blob/main/license
+utils.isValidFilename = function(string) {
+  if (!string || string.length > 255) {
+    return false;
+  }
+
+  if (
+    filenameReservedRegex.test(string) ||
+    windowsReservedNameRegex.test(string)
+  ) {
+    return false;
+  }
+
+  if (string === "." || string === "..") {
+    return false;
+  }
+
+  return true;
+};
+
 utils.mkdir = async function(dir, cb) {
-  for (const d of (Array.isArray(dir) ? dir : [dir])) {
+  for (const d of Array.isArray(dir) ? dir : [dir]) {
     await mkdir(d, {mode: "755", recursive: true});
   }
   cb();
@@ -134,7 +162,15 @@ utils.normalizePath = function(p) {
 };
 
 utils.addFilesPath = function(p) {
-  return p === "/" ? paths.get().files : path.join(`${paths.get().files}/${p}`);
+  const determinedPath = fs.realpathSync(
+    p === "/" ? paths.get().files : path.join(paths.get().files, p)
+  );
+
+  if (!determinedPath.startsWith(paths.get().files)) {
+    return paths.get().files;
+  }
+
+  return determinedPath;
 };
 
 utils.removeFilesPath = function(p) {
@@ -164,7 +200,7 @@ utils.isPathSane = function(p, isURL) {
     return p.split(/[\\/]/gm).every(name => {
       if (name === "." || name === "..") return false;
       if (!name) return true;
-      return validate(name); // will reject invalid filenames on Windows
+      return utils.isValidFilename(name); // will reject invalid filenames on Windows
     });
   }
 };
