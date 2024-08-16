@@ -50,7 +50,6 @@
         "send": "0.17.1",
         "strip-ansi": "7.0.0",
         "untildify": "4.0.0",
-        "valid-filename": "4.0.0",
         "which": "2.0.2",
         "ws": "8.2.1",
         "yazl": "2.5.1"
