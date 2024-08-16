@@ -94,7 +94,7 @@
     ],
     "browserslist": "defaults",
     "volta": {
-        "node": "14.21.3",
+        "node": "18.20.4",
         "yarn": "1.22.10"
     },
     "lint-staged": {
