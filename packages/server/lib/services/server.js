@@ -1046,6 +1046,7 @@ function handleUploadRequest(req, res) {
 
   const dstDir =
     decodeURIComponent(req.query.to) || clients[req.sid].views[vId].directory;
+
   let numFiles = 0;
 
   log.info(req, res, "Upload started");
@@ -1073,7 +1074,9 @@ function handleUploadRequest(req, res) {
 
   bb.on("file", (_, file, info) => {
     const { filename } = info;
-    if (!utils.isPathSane(filename) || !utils.isPathSane(dstDir)) return;
+    if (!utils.isPathSane(filename) || !utils.isPathSane(dstDir)) {
+      return;
+    }
     numFiles++;
 
     file.on("limit", () => {
@@ -1092,7 +1095,8 @@ function handleUploadRequest(req, res) {
     const tmpPath = utils.addUploadTempExt(filename);
     rootNames.add(utils.rootname(tmpPath));
 
-    const dst = path.join(paths.get().files, dstDir, tmpPath);
+    const dst = utils.addFilesPath(path.join(dstDir, tmpPath));
+
     utils.mkdir(path.dirname(dst), () => {
       fs.stat(dst, (err) => {
         if (err && err.code === "ENOENT") {
@@ -1125,12 +1129,9 @@ function handleUploadRequest(req, res) {
     // move temp files into place
     await Promise.all(
       [...rootNames].map(async (p) => {
-        const srcPath = path.join(paths.get().files, dstDir, p);
-        const dstPath = path.join(
-          paths.get().files,
-          dstDir,
-          utils.removeUploadTempExt(p)
-        );
+        const srcPath = utils.addFilesPath(path.join(dstDir, p));
+        const dstPath = utils.addFilesPath(path.join(dstDir, utils.removeUploadTempExt(p)));
+
         await promisify(utils.move)(srcPath, dstPath);
       })
     );
@@ -1146,7 +1147,9 @@ function handleUploadRequest(req, res) {
       // remove all uploaded temp files on cancel
       await Promise.all(
         [...rootNames].map(async (p) => {
-          await promisify(utils.rm)(path.join(paths.get().files, dstDir, p));
+
+
+          await promisify(utils.rm)(utils.addFilesPath(path.join(dstDir, p)));
         })
       );
 

@@ -167,9 +167,15 @@ class DroppyUtils {
   }
 
   addFilesPath(p) {
-    return p === "/"
-      ? paths.get().files
-      : path.join(`${paths.get().files}/${p}`);
+    const filesPath = path.resolve(
+      p === "/" ? paths.get().files : path.join(`${paths.get().files}/${p}`)
+    );
+
+    if (!filesPath.startsWith(path.resolve(paths.get().files))) {
+      return paths.get().files;
+    }
+
+    return filesPath;
   }
 
   removeFilesPath(p) {
