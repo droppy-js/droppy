@@ -1,7 +1,7 @@
-const filetree = require("../services/filetree.js");
+import filetree from "../services/filetree.js";
 
-exports.default = {
-  handler: async ({validatePaths, sid, sendFiles, msg, ws, vId}) => {
+export default {
+  handler: async ({ validatePaths, sid, sendFiles, msg, ws, vId }) => {
     if (!validatePaths(msg.data.dir, msg.type, ws, sid, vId)) {
       return;
     }
@@ -9,5 +9,5 @@ exports.default = {
     await filetree.updateDir(msg.data.dir);
 
     sendFiles(sid, vId);
-  }
+  },
 };

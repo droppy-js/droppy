@@ -17,6 +17,10 @@ const ATTRIBUTE_ID = "id";
  * @see <a href="https://github.com/cheeriojs/cheerio">The Cheerio Project</a>
  */
 function svgToSymbol(id, child, _options) {
+  if (_options === void 0) {
+    _options = {};
+  }
+
   const svgElem = child(SELECTOR_SVG);
 
   // initialize a new <symbol> element

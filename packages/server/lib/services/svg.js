@@ -1,20 +1,23 @@
 "use strict";
 
-const svgstore = require("@droppyjs/svgstore");
-const fs = require("fs");
-const path = require("path");
-const paths = require("./paths.js");
+import svgstore from "@droppyjs/svgstore";
+import fs from "fs";
+import path from "path";
+import paths from "./paths.js";
 
-module.exports = function svg() {
+export default function svg() {
   const sprites = svgstore({
     svgAttrs: {
       style: "display: none",
     },
   });
 
-  fs.readdirSync(paths.get().svg).forEach(file => {
-    sprites.add(`i-${file.replace(/\.svg/, "")}`, fs.readFileSync(path.join(paths.get().svg, file)));
+  fs.readdirSync(paths.get().svg).forEach((file) => {
+    sprites.add(
+      `i-${file.replace(/\.svg/, "")}`,
+      fs.readFileSync(path.join(paths.get().svg, file))
+    );
   });
 
-  return sprites.toString({inline: true});
-};
+  return sprites.toString({ inline: true });
+}

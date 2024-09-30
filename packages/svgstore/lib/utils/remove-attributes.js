@@ -18,7 +18,7 @@ function removeAttributes(el, attrs) {
 
   const els = el.find("*");
 
-  els.each((i, _el) => {
+  els.each((i) => {
     localAttrs.forEach((attr) => {
       els.eq(i).removeAttr(attr);
     });

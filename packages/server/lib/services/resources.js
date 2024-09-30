@@ -1,29 +1,40 @@
 "use strict";
 
-const resources = module.exports = {};
-const etag = require("etag");
-const fs = require("fs");
-const jb = require("json-buffer");
-const path = require("path");
-const vm = require("vm");
-const {constants, gzip, brotliCompress} = require("zlib");
-const {stat, mkdir, readdir, readFile, writeFile} = require("fs").promises;
-const {promisify} = require("util");
+const resources = {};
 
-const log = require("./log.js");
-const paths = require("./paths.js");
-const utils = require("./utils.js");
+import etag from "etag";
+import fs from "fs";
+import jb from "json-buffer";
+import path from "path";
+import vm from "vm";
+import { constants, gzip, brotliCompress } from "zlib";
+import { stat, mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { promisify } from "util";
 
-const themesPath = path.join(paths.get().client, "/node_modules/codemirror/theme");
-const modesPath = path.join(paths.get().client, "/node_modules/codemirror/mode");
-const cachePath = process.env.DROPPY_CACHE_PATH ?? path.join(paths.get().homedir, "/.droppy/cache/cache.json");
+import log from "./log.js";
+import paths from "./paths.js";
+import utils from "./utils.js";
 
-const pkg = require("../../package.json");
+const themesPath = path.join(
+  paths.get().client,
+  "/node_modules/codemirror/theme"
+);
+const modesPath = path.join(
+  paths.get().client,
+  "/node_modules/codemirror/mode"
+);
+const cachePath =
+  process.env.DROPPY_CACHE_PATH ??
+  path.join(paths.get().homedir, "/.droppy/cache/cache.json");
 
-const gzipEncode = (data) => promisify(gzip)(data, {level: constants.Z_BEST_COMPRESSION});
-const brotliEncode = (data) => promisify(brotliCompress)(data, {
-  [constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY
-});
+import pkg from "../../package.json" with { type: "json" };
+
+const gzipEncode = (data) =>
+  promisify(gzip)(data, { level: constants.Z_BEST_COMPRESSION });
+const brotliEncode = (data) =>
+  promisify(brotliCompress)(data, {
+    [constants.BROTLI_PARAM_QUALITY]: constants.BROTLI_MAX_QUALITY,
+  });
 
 let minify;
 
@@ -75,9 +86,7 @@ const opts = {
     collapseBooleanAttributes: true,
     collapseInlineTagWhitespace: true,
     collapseWhitespace: true,
-    customAttrSurround: [
-      [/{{#.+?}}/, /{{\/.+?}}/]
-    ],
+    customAttrSurround: [[/{{#.+?}}/, /{{\/.+?}}/]],
     decodeEntities: true,
     ignoreCustomComments: [],
     ignoreCustomFragments: [/{{[\s\S]*?}}/],
@@ -91,19 +100,18 @@ const opts = {
     removeOptionalTags: true,
     removeRedundantAttributes: true,
     removeTagWhitespace: true,
-  }
+  },
 };
 
-let autoprefixer, cleanCSS, postcss, terser, htmlMinifier, svg, handlebars;
-try {
-  autoprefixer = require("autoprefixer");
-  cleanCSS = new (require("clean-css"))(opts.cleanCSS);
-  handlebars = require("handlebars");
-  htmlMinifier = require("html-minifier");
-  postcss = require("postcss");
-  terser = require("terser");
-  svg = require("./svg.js");
-} catch {}
+import autoprefixer from "autoprefixer";
+import CleanCSS from "clean-css";
+import handlebars from "handlebars";
+import htmlMinifier from "html-minifier";
+import postcss from "postcss";
+import * as terser from "terser";
+import svg from "./svg.js";
+
+const cleanCSS = new CleanCSS(opts.cleanCSS);
 
 resources.files = {
   css: [
@@ -130,7 +138,7 @@ resources.files = {
     "lib/images/logo180.png",
     "lib/images/logo192.png",
     "lib/images/sprites.png",
-  ]
+  ],
 };
 
 // On-demand loadable libs. Will be available as !/res/lib/[prop]
@@ -140,7 +148,7 @@ const libs = {
   "plyr.css": ["node_modules/plyr/dist/plyr.css"],
   "plyr.svg": ["node_modules/plyr/dist/plyr.svg"],
   "blank.mp4": ["lib/blank.mp4"],
-    // codemirror
+  // codemirror
   "cm.js": [
     "node_modules/codemirror/lib/codemirror.js",
     "node_modules/codemirror/mode/meta.js",
@@ -152,10 +160,10 @@ const libs = {
     "node_modules/codemirror/addon/search/searchcursor.js",
     "node_modules/codemirror/addon/edit/matchbrackets.js",
     "node_modules/codemirror/addon/search/search.js",
-    "node_modules/codemirror/keymap/sublime.js"
+    "node_modules/codemirror/keymap/sublime.js",
   ],
   "cm.css": ["node_modules/codemirror/lib/codemirror.css"],
-    // photoswipe
+  // photoswipe
   "ps.js": [
     "node_modules/photoswipe/dist/photoswipe.min.js",
     "node_modules/photoswipe/dist/photoswipe-ui-default.min.js",
@@ -164,14 +172,18 @@ const libs = {
     "node_modules/photoswipe/dist/photoswipe.css",
     "node_modules/photoswipe/dist/default-skin/default-skin.css",
   ],
-    // photoswipe skin files included by their CSS
-  "default-skin.png": ["node_modules/photoswipe/dist/default-skin/default-skin.png"],
-  "default-skin.svg": ["node_modules/photoswipe/dist/default-skin/default-skin.svg"],
+  // photoswipe skin files included by their CSS
+  "default-skin.png": [
+    "node_modules/photoswipe/dist/default-skin/default-skin.png",
+  ],
+  "default-skin.svg": [
+    "node_modules/photoswipe/dist/default-skin/default-skin.svg",
+  ],
   "pdf.js": ["node_modules/pdfjs-dist/build/pdf.js"],
   "pdf.worker.js": ["node_modules/pdfjs-dist/build/pdf.worker.js"],
 };
 
-resources.load = function(dev, cb) {
+resources.load = function (dev, cb) {
   minify = !dev;
 
   if (dev) return compile(false, cb);
@@ -199,8 +211,8 @@ resources.load = function(dev, cb) {
   });
 };
 
-resources.build = function(cb) {
-  isCacheFresh(fresh => {
+resources.build = function (cb) {
+  isCacheFresh((fresh) => {
     if (fresh) {
       fs.readFile(cachePath, (err, data) => {
         if (err) return compile(true, cb);
@@ -228,7 +240,7 @@ async function isCacheFresh(cb) {
 
   const files = [];
   for (const type of Object.keys(resources.files)) {
-    resources.files[type].forEach(file => {
+    resources.files[type].forEach((file) => {
       if (fs.existsSync(path.join(paths.get().client, file))) {
         files.push(path.join(paths.get().client, file));
       } else {
@@ -245,7 +257,7 @@ async function isCacheFresh(cb) {
         files.push(libs[file]);
       }
     } else {
-      libs[file].forEach(file => {
+      libs[file].forEach((file) => {
         if (fs.existsSync(path.join(paths.get().client, file))) {
           files.push(path.join(paths.get().client, file));
         } else {
@@ -255,19 +267,26 @@ async function isCacheFresh(cb) {
     }
   }
 
-  const fileStats = await Promise.all(files.map(file => stat(file)));
-  const times = fileStats.map(stat => stat.mtime.getTime());
+  const fileStats = await Promise.all(files.map((file) => stat(file)));
+  const times = fileStats.map((stat) => stat.mtime.getTime());
   cb(stats.mtime.getTime() >= Math.max(...times));
 }
 
 async function compile(write, cb) {
   if (!autoprefixer) {
-    return cb(new Error("Missing devDependencies to compile resource cache, " +
-            "please reinstall or run `npm install --only=dev` inside the project directory"));
+    return cb(
+      new Error(
+        "Missing devDependencies to compile resource cache, " +
+          "please reinstall or run `npm install --only=dev` inside the project directory"
+      )
+    );
   }
 
   const cache = {
-    res: {}, themes: {}, modes: {}, lib: {}
+    res: {},
+    themes: {},
+    modes: {},
+    lib: {},
   };
 
   cache.res = await compileAll();
@@ -298,19 +317,21 @@ async function compile(write, cb) {
 
   for (const entries of Object.values(cache)) {
     if (!entries.version) {
-      await Promise.all(Object.values(entries).map(async props => {
-        props.gzip = await gzipEncode(props.data);
-        props.brotli = await brotliEncode(props.data);
-      }));
+      await Promise.all(
+        Object.values(entries).map(async (props) => {
+          props.gzip = await gzipEncode(props.data);
+          props.brotli = await brotliEncode(props.data);
+        })
+      );
     }
   }
 
   cache["meta"] = {
-    version: pkg.version
+    version: pkg.version,
   };
 
   if (write) {
-    await mkdir(path.dirname(cachePath), {recursive: true});
+    await mkdir(path.dirname(cachePath), { recursive: true });
     await writeFile(cachePath, jb.stringify(cache));
   }
   cb(null, cache);
@@ -321,10 +342,14 @@ async function readThemes() {
 
   for (const name of await readdir(themesPath)) {
     const data = await readFile(path.join(themesPath, name));
-    themes[name.replace(/\.css$/, "")] = Buffer.from(await minifyCSS(String(data)));
+    themes[name.replace(/\.css$/, "")] = Buffer.from(
+      await minifyCSS(String(data))
+    );
   }
 
-  const droppyTheme = await readFile(path.join(paths.get().client, "/lib/cmtheme.css"));
+  const droppyTheme = await readFile(
+    path.join(paths.get().client, "/lib/cmtheme.css")
+  );
   themes.droppy = Buffer.from(await minifyCSS(String(droppyTheme)));
 
   return themes;
@@ -333,11 +358,13 @@ async function readThemes() {
 async function readModes() {
   const modes = {};
 
-    // parse meta.js from CM for supported modes
-  const js = await readFile(path.join(paths.get().client, "/node_modules/codemirror/mode/meta.js"));
+  // parse meta.js from CM for supported modes
+  const js = await readFile(
+    path.join(paths.get().client, "/node_modules/codemirror/mode/meta.js")
+  );
 
-    // Extract modes from CodeMirror
-  const sandbox = {CodeMirror: {}};
+  // Extract modes from CodeMirror
+  const sandbox = { CodeMirror: {} };
   vm.runInNewContext(js, sandbox);
 
   for (const entry of sandbox.CodeMirror.modeInfo) {
@@ -356,16 +383,22 @@ async function readLibs() {
   const lib = {};
 
   for (const [dest, files] of Object.entries(libs)) {
-    lib[dest] = Buffer.concat(await Promise.all(files.map(file => {
-      return readFile(path.join(paths.get().client, file));
-    })));
+    lib[dest] = Buffer.concat(
+      await Promise.all(
+        files.map((file) => {
+          return readFile(path.join(paths.get().client, file));
+        })
+      )
+    );
   }
 
-    // Prefix hardcoded Photoswipe urls
-  lib["ps.css"] = Buffer.from(String(lib["ps.css"]).replace(/url\(/gm, "url(!/res/lib/"));
+  // Prefix hardcoded Photoswipe urls
+  lib["ps.css"] = Buffer.from(
+    String(lib["ps.css"]).replace(/url\(/gm, "url(!/res/lib/")
+  );
 
   if (minify) {
-    for (const [file, data] of (Object.entries(lib))) {
+    for (const [file, data] of Object.entries(lib)) {
       if (/\.js$/.test(file)) {
         lib[file] = Buffer.from(await minifyJS(String(data)));
       } else if (/\.css$/.test(file)) {
@@ -393,34 +426,49 @@ async function minifyCSS(css) {
 }
 
 function templates() {
-  const prefix = "(function(){var template=Handlebars.template," +
-        "templates=Handlebars.templates=Handlebars.templates||{};";
+  const prefix =
+    "(function(){var template=Handlebars.template," +
+    "templates=Handlebars.templates=Handlebars.templates||{};";
   const suffix = "Handlebars.partials=Handlebars.templates})();";
 
-  return prefix + fs.readdirSync(paths.get().templates).map(file => {
-    const p = path.join(paths.get().templates, file);
-    const name = file.replace(/\..+$/, "");
-    let html = htmlMinifier.minify(fs.readFileSync(p, "utf8"), opts.htmlMinifier);
+  return (
+    prefix +
+    fs
+      .readdirSync(paths.get().templates)
+      .map((file) => {
+        const p = path.join(paths.get().templates, file);
+        const name = file.replace(/\..+$/, "");
+        let html = htmlMinifier.minify(
+          fs.readFileSync(p, "utf8"),
+          opts.htmlMinifier
+        );
 
         // remove whitespace around {{fragments}}
-    html = html.replace(/(>|^|}}) ({{|<|$)/g, "$1$2");
+        html = html.replace(/(>|^|}}) ({{|<|$)/g, "$1$2");
 
         // trim whitespace inside {{fragments}}
-    html = html.replace(/({{2,})([\s\S\n]*?)(}{2,})/gm, (_, p1, p2, p3) => {
-      return p1 + p2.replace(/\n/gm, " ").replace(/ {2,}/gm, " ").trim() + p3;
-    }).trim();
+        html = html
+          .replace(/({{2,})([\s\S\n]*?)(}{2,})/gm, (_, p1, p2, p3) => {
+            return (
+              p1 + p2.replace(/\n/gm, " ").replace(/ {2,}/gm, " ").trim() + p3
+            );
+          })
+          .trim();
 
         // remove {{!-- comments --}}
-    html = html.replace(/{{![\s\S]+?..}}/, "");
+        html = html.replace(/{{![\s\S]+?..}}/, "");
 
-    const compiled = handlebars.precompile(html, {data: false});
-    return `templates['${name}']=template(${compiled});`;
-  }).join("") + suffix;
+        const compiled = handlebars.precompile(html, { data: false });
+        return `templates['${name}']=template(${compiled});`;
+      })
+      .join("") +
+    suffix
+  );
 }
 
-resources.compileJS = async function() {
+resources.compileJS = async function () {
   let js = "";
-  resources.files.js.forEach(file => {
+  resources.files.js.forEach((file) => {
     if (fs.existsSync(path.join(paths.get().client, file))) {
       js += `${fs.readFileSync(path.join(paths.get().client, file), "utf8")};`;
     } else {
@@ -428,10 +476,10 @@ resources.compileJS = async function() {
     }
   });
 
-    // Add templates
+  // Add templates
   js = js.replace("/* {{ templates }} */", templates());
 
-    // Minify
+  // Minify
   js = await minifyJS(js);
 
   return {
@@ -441,14 +489,16 @@ resources.compileJS = async function() {
   };
 };
 
-resources.compileCSS = async function() {
+resources.compileCSS = async function () {
   let css = "";
-  resources.files.css.forEach(file => {
+  resources.files.css.forEach((file) => {
     css += `${fs.readFileSync(path.join(file), "utf8")}\n`;
   });
 
-    // Vendor prefixes and minify
-  css = await minifyCSS(postcss([autoprefixer(opts.autoprefixer)]).process(css).css);
+  // Vendor prefixes and minify
+  css = await minifyCSS(
+    postcss([autoprefixer(opts.autoprefixer)]).process(css).css
+  );
 
   return {
     data: Buffer.from(css),
@@ -457,21 +507,36 @@ resources.compileCSS = async function() {
   };
 };
 
-resources.compileHTML = async function(res) {
-  let html = fs.readFileSync(path.join(paths.get().client, "lib", "index.html"), "utf8");
+resources.compileHTML = async function (res) {
+  let html = fs.readFileSync(
+    path.join(paths.get().client, "lib", "index.html"),
+    "utf8"
+  );
   html = html.replace("<!-- {{svg}} -->", svg());
 
   let auth = html.replace("{{type}}", "a");
   auth = minify ? htmlMinifier.minify(auth, opts.htmlMinifier) : auth;
-  res["auth.html"] = {data: Buffer.from(auth), etag: etag(auth), mime: utils.contentType("html")};
+  res["auth.html"] = {
+    data: Buffer.from(auth),
+    etag: etag(auth),
+    mime: utils.contentType("html"),
+  };
 
   let first = html.replace("{{type}}", "f");
   first = minify ? htmlMinifier.minify(first, opts.htmlMinifier) : first;
-  res["first.html"] = {data: Buffer.from(first), etag: etag(first), mime: utils.contentType("html")};
+  res["first.html"] = {
+    data: Buffer.from(first),
+    etag: etag(first),
+    mime: utils.contentType("html"),
+  };
 
   let main = html.replace("{{type}}", "m");
   main = minify ? htmlMinifier.minify(main, opts.htmlMinifier) : main;
-  res["main.html"] = {data: Buffer.from(main), etag: etag(main), mime: utils.contentType("html")};
+  res["main.html"] = {
+    data: Buffer.from(main),
+    etag: etag(main),
+    mime: utils.contentType("html"),
+  };
   return res;
 };
 
@@ -482,13 +547,15 @@ async function compileAll() {
   res["style.css"] = await resources.compileCSS();
   res = await resources.compileHTML(res);
 
-    // Read misc files
+  // Read misc files
   for (const file of resources.files.other) {
     const name = path.basename(file);
     const fullPath = path.join(paths.get().client, file);
     const data = fs.readFileSync(fullPath);
-    res[name] = {data, etag: etag(data), mime: utils.contentType(name)};
+    res[name] = { data, etag: etag(data), mime: utils.contentType(name) };
   }
 
   return res;
 }
+
+export default resources;

@@ -1,9 +1,9 @@
 "use strict";
 
 function promisify(fn) {
-  return function() {
-    return new Promise(resolve => {
-      fn(result => resolve(result));
+  return function () {
+    return new Promise((resolve) => {
+      fn((result) => resolve(result));
     });
   };
 }
@@ -18,43 +18,52 @@ initVariables();
 //  Feature Detects
 // ============================================================================
 droppy.detects = {
-  directoryUpload: (function() {
+  directoryUpload: (function () {
     const el = document.createElement("input");
     return droppy.dir.some((prop) => {
       return prop in el;
     });
   })(),
-  audioTypes: (function() {
+  audioTypes: (function () {
     const types = {},
       el = document.createElement("audio");
     Object.keys(droppy.audioTypes).forEach((type) => {
-      types[droppy.audioTypes[type]] = Boolean(el.canPlayType(droppy.audioTypes[type]).replace(/no/, ""));
+      types[droppy.audioTypes[type]] = Boolean(
+        el.canPlayType(droppy.audioTypes[type]).replace(/no/, "")
+      );
     });
     return types;
   })(),
-  videoTypes: (function() {
+  videoTypes: (function () {
     const types = {},
       el = document.createElement("video");
     Object.keys(droppy.videoTypes).forEach((type) => {
-      types[droppy.videoTypes[type]] = Boolean(el.canPlayType(droppy.videoTypes[type]).replace(/no/, ""));
+      types[droppy.videoTypes[type]] = Boolean(
+        el.canPlayType(droppy.videoTypes[type]).replace(/no/, "")
+      );
     });
     return types;
   })(),
-  webp: document.createElement("canvas").toDataURL("image/webp").indexOf("data:image/webp") === 0,
+  webp:
+    document
+      .createElement("canvas")
+      .toDataURL("image/webp")
+      .indexOf("data:image/webp") === 0,
   notification: "Notification" in window,
   mobile: /Mobi/.test(navigator.userAgent),
-  safari: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent),
+  safari:
+    /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent),
 };
 
 // Transition of freshly inserted elements
-$.fn.transition = function(oldClass, newClass) {
+$.fn.transition = function (oldClass, newClass) {
   if (!newClass) {
     newClass = oldClass;
     oldClass = null;
   }
 
-    // Force a reflow
-    // https://gist.github.com/paulirish/5d52fb081b3570c81e3a
+  // Force a reflow
+  // https://gist.github.com/paulirish/5d52fb081b3570c81e3a
   this.r = this[0].offsetTop;
   delete this.r;
 
@@ -68,9 +77,10 @@ $.fn.transition = function(oldClass, newClass) {
 };
 
 // transitionend helper, makes sure the callback gets fired regardless if the transition gets cancelled
-$.fn.transitionend = function(callback) {
+$.fn.transitionend = function (callback) {
   if (!this.length) return;
-  let duration, called = false;
+  let duration,
+    called = false;
   const el = this[0];
 
   function doCallback(event) {
@@ -80,18 +90,24 @@ $.fn.transitionend = function(callback) {
   }
 
   duration = getComputedStyle(el).transitionDuration;
-  duration = (duration.includes("ms")) ? parseFloat(duration) : parseFloat(duration) * 1000;
+  duration = duration.includes("ms")
+    ? parseFloat(duration)
+    : parseFloat(duration) * 1000;
 
-  setTimeout(() => { // Call back if "transitionend" hasn't fired in duration + 30
-    doCallback({target: el}); // Just mimic the event.target property on our fake event
+  setTimeout(() => {
+    // Call back if "transitionend" hasn't fired in duration + 30
+    doCallback({ target: el }); // Just mimic the event.target property on our fake event
   }, duration + 30);
 
   return this.one("transitionend", doCallback);
 };
 
 // Class swapping helper
-$.fn.replaceClass = function(search, replacement) {
-  let el, classes, matches, i = this.length,
+$.fn.replaceClass = function (search, replacement) {
+  let el,
+    classes,
+    matches,
+    i = this.length,
     hasClass = false;
   while (--i >= 0) {
     el = this[i];
@@ -100,9 +116,13 @@ $.fn.replaceClass = function(search, replacement) {
       if (className === search) return false;
       if (className === replacement) hasClass = true;
 
-      matches = search instanceof RegExp ? search.exec(className) : className.match(search);
-            // filter out if the entire capture matches the entire className
-      if (matches) return matches[0] !== className || matches[0] === replacement;
+      matches =
+        search instanceof RegExp
+          ? search.exec(className)
+          : className.match(search);
+      // filter out if the entire capture matches the entire className
+      if (matches)
+        return matches[0] !== className || matches[0] === replacement;
       else return true;
     });
     if (!hasClass) classes.push(replacement);
@@ -115,21 +135,23 @@ $.fn.replaceClass = function(search, replacement) {
   return this;
 };
 
-Handlebars.registerHelper("select", function(sel, opts) {
+Handlebars.registerHelper("select", function (sel, opts) {
   return opts.fn(this).replace(new RegExp(` value="${sel}"`), "$& selected=");
 });
-Handlebars.registerHelper("is", function(a, b, opts) {
+Handlebars.registerHelper("is", function (a, b, opts) {
   return a === b ? opts.fn(this) : opts.inverse(this);
 });
 
 function svg(which) {
-    // Manually clone instead of <use> because of a weird bug with media arrows in Firefox
+  // Manually clone instead of <use> because of a weird bug with media arrows in Firefox
   const svg = document.getElementById(`i-${which}`).cloneNode(true);
   svg.setAttribute("class", svg.id.replace("i-", ""));
   svg.removeAttribute("id");
 
-    // Edge doesn't support outerHTML on SVG
-  const html = svg.outerHTML || document.createElement("div").appendChild(svg).parentNode.innerHTML;
+  // Edge doesn't support outerHTML on SVG
+  const html =
+    svg.outerHTML ||
+    document.createElement("div").appendChild(svg).parentNode.innerHTML;
   return html.replace(/(?!<\/)?symbol/g, "svg");
 }
 Handlebars.registerHelper("svg", svg);
@@ -146,7 +168,7 @@ if (droppy.detects.webp) {
 // ============================================================================
 let prefs, doSave;
 const defaults = {
-  volume: .5,
+  volume: 0.5,
   interfaceTheme: "default",
   theme: "droppy",
   editorFontSize: droppy.detects.mobile ? 12 : 16,
@@ -171,7 +193,9 @@ function loadPrefs() {
   let prefs;
   try {
     prefs = JSON.parse(localStorage.getItem("prefs"));
-  } catch {}
+  } catch {
+    prefs = null;
+  }
 
   return prefs || defaults;
 }
@@ -186,17 +210,17 @@ Object.keys(defaults).forEach((pref) => {
 });
 if (doSave) savePrefs(prefs);
 
-droppy.get = function(pref) {
+droppy.get = function (pref) {
   prefs = loadPrefs();
   return prefs[pref];
 };
 
-droppy.set = function(pref, value) {
+droppy.set = function (pref, value) {
   prefs[pref] = value;
   savePrefs(prefs);
 };
 
-droppy.del = function(pref) {
+droppy.del = function (pref) {
   delete prefs[pref];
   savePrefs(prefs);
 };
@@ -208,7 +232,7 @@ if (type === "m") {
   render("main");
   initMainPage();
 } else {
-  render("login", {first: type === "f"});
+  render("login", { first: type === "f" });
   initAuthPage(type === "f");
 }
 // ============================================================================
@@ -225,7 +249,11 @@ function getView(id) {
 }
 
 function getOtherViews(id) {
-  return $(droppy.views.filter((_, i) => { return i !== id; }));
+  return $(
+    droppy.views.filter((_, i) => {
+      return i !== id;
+    })
+  );
 }
 
 function getActiveView() {
@@ -266,7 +294,9 @@ function newView(dest, vId) {
 
 function destroyView(vId) {
   getView(vId).remove();
-  droppy.views = droppy.views.filter((_, i) => { return i !== vId; });
+  droppy.views = droppy.views.filter((_, i) => {
+    return i !== vId;
+  });
   droppy.views.forEach((view) => {
     $(view).removeClass("left right");
     $(view).find(".newview svg").replaceWith(svg("window"));
@@ -286,7 +316,7 @@ function init() {
   if (droppy.queuedData) {
     sendMessage();
   } else {
-        // Create new view with initializing
+    // Create new view with initializing
     getLocationsFromHash().forEach((string, index) => {
       const dest = join(decodeURIComponent(string));
       newView(dest, index);
@@ -296,22 +326,26 @@ function init() {
 
 function openSocket() {
   droppy.socket = new WebSocket(
-    `${window.location.origin.replace(/^http/, "ws") + window.location.pathname}!/socket`
+    `${
+      window.location.origin.replace(/^http/, "ws") + window.location.pathname
+    }!/socket`
   );
 
-  droppy.socket.addEventListener("open", (_event) => {
+  droppy.socket.addEventListener("open", () => {
     if (droppy.token) {
       init();
     } else {
-      ajax({url: "!/token", headers: {"x-app": "droppy"}}).then((res) => {
-        return res.text();
-      }).then((text) => {
-        droppy.token = text;
-        init();
-      });
+      ajax({ url: "!/token", headers: { "x-app": "droppy" } })
+        .then((res) => {
+          return res.text();
+        })
+        .then((text) => {
+          droppy.token = text;
+          init();
+        });
     }
   });
-    // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Close_codes
+  // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Close_codes
   droppy.socket.addEventListener("close", (event) => {
     if (event.code === 4000) return;
     if (event.code === 1011) {
@@ -319,8 +353,8 @@ function openSocket() {
       openSocket();
     } else if (event.code >= 1001 && event.code < 3999) {
       if (droppy.wsRetries > 0) {
-                // Gracefully reconnect on abnormal closure of the socket, 1 retry every 4 seconds, 20 seconds total.
-                // TODO: Indicate connection drop in the UI, especially on close code 1006
+        // Gracefully reconnect on abnormal closure of the socket, 1 retry every 4 seconds, 20 seconds total.
+        // TODO: Indicate connection drop in the UI, especially on close code 1006
         setTimeout(() => {
           openSocket();
           droppy.wsRetries--;
@@ -339,9 +373,11 @@ function openSocket() {
     droppy.socketWait = false;
 
     switch (msg.type) {
-      case "UPDATE_DIRECTORY":
-      {
-        if (typeof view[0].dataset.type === "undefined" || view[0].switchRequest) {
+      case "UPDATE_DIRECTORY": {
+        if (
+          typeof view[0].dataset.type === "undefined" ||
+          view[0].switchRequest
+        ) {
           view[0].dataset.type = "directory"; // For initial loading
         }
         if (!view.length) return;
@@ -350,7 +386,10 @@ function openSocket() {
             view[0].currentFile = null;
             view[0].currentFolder = msg.folder;
             if (view[0].vId === 0) setTitle(basename(msg.folder));
-            replaceHistory(view, join(view[0].currentFolder, view[0].currentFile));
+            replaceHistory(
+              view,
+              join(view[0].currentFolder, view[0].currentFile)
+            );
             updatePath(view);
           }
           view[0].switchRequest = false;
@@ -358,25 +397,22 @@ function openSocket() {
           openDirectory(view, view[0].currentData);
         } else if (view[0].dataset.type === "media") {
           view[0].currentData = msg.data;
-                        // TODO: Update media array
+          // TODO: Update media array
         }
         break;
       }
-      case "UPDATE_BE_FILE":
-      {
+      case "UPDATE_BE_FILE": {
         openFile(getView(vId), msg.folder, msg.file);
         break;
       }
-      case "RELOAD":
-      {
+      case "RELOAD": {
         if (msg.css) {
           $("#css").remove();
           $(`<style id='css'>${msg.css}</style>`).appendTo($("head"));
         } else window.location.reload(true);
         break;
       }
-      case "SHARELINK":
-      {
+      case "SHARELINK": {
         hideSpinner(view);
         if (view.find(".info-box.link.in").length) {
           view.find(".link-out")[0].textContent = getFullLink(msg.link);
@@ -385,23 +421,22 @@ function openSocket() {
         }
         break;
       }
-      case "USER_LIST":
-      {
+      case "USER_LIST": {
         updateUsers(msg.users);
         break;
       }
-      case "SAVE_STATUS":
-      {
+      case "SAVE_STATUS": {
         hideSpinner(view);
         const file = view.find(".path li:last-child");
-        file.removeClass("dirty").addClass(msg.status === 0 ? "saved" : "save-failed");
+        file
+          .removeClass("dirty")
+          .addClass(msg.status === 0 ? "saved" : "save-failed");
         setTimeout(() => {
           file.removeClass("saved save-failed");
         }, 3000);
         break;
       }
-      case "SETTINGS":
-      {
+      case "SETTINGS": {
         Object.keys(msg.settings).forEach((setting) => {
           droppy[setting] = msg.settings[setting];
         });
@@ -412,11 +447,11 @@ function openSocket() {
         droppy.themes = droppy.themes.split("|");
         droppy.modes = droppy.modes.split("|");
 
-                    // Move own theme to top of theme list
+        // Move own theme to top of theme list
         droppy.themes.pop();
         droppy.themes.unshift("droppy");
 
-                    // Insert plain mode on the top
+        // Insert plain mode on the top
         droppy.modes.unshift("plain");
 
         if (droppy.dev) {
@@ -433,18 +468,15 @@ function openSocket() {
         }
         break;
       }
-      case "MEDIA_FILES":
-      {
+      case "MEDIA_FILES": {
         loadMedia(view, msg.files);
         break;
       }
-      case "SEARCH_RESULTS":
-      {
+      case "SEARCH_RESULTS": {
         openDirectory(view, msg.results, true);
         break;
       }
-      case "ERROR":
-      {
+      case "ERROR": {
         showError(view, msg.text);
         hideSpinner(view);
         break;
@@ -454,7 +486,7 @@ function openSocket() {
 }
 
 function sendMessage(vId, type, data) {
-  const sendObject = {vId, type, data, token: droppy.token};
+  const sendObject = { vId, type, data, token: droppy.token };
   if (typeof sendObject.data === "string") {
     sendObject.data = normalize(sendObject.data);
   } else if (typeof sendObject.data === "object") {
@@ -466,10 +498,11 @@ function sendMessage(vId, type, data) {
   }
   const json = JSON.stringify(sendObject);
 
-  if (droppy.socket.readyState === 1) { // open
-        // Lock the UI while we wait for a socket response
+  if (droppy.socket.readyState === 1) {
+    // open
+    // Lock the UI while we wait for a socket response
     droppy.socketWait = true;
-        // Unlock the UI in case we get no socket resonse after waiting for 1 second
+    // Unlock the UI in case we get no socket resonse after waiting for 1 second
     setTimeout(() => {
       droppy.socketWait = false;
     }, 1000);
@@ -479,13 +512,15 @@ function sendMessage(vId, type, data) {
     }
     droppy.socket.send(json);
   } else {
-        // We can't send right now, so queue up the last added message to be sent later
+    // We can't send right now, so queue up the last added message to be sent later
     droppy.queuedData = json;
-    if (droppy.socket.readyState === 2) { // closing
-            // Socket is closing, queue a re-opening
+    if (droppy.socket.readyState === 2) {
+      // closing
+      // Socket is closing, queue a re-opening
       droppy.reopen = true;
-    } else if (droppy.socket.readyState === 3) { // closed
-            // Socket is closed, we can re-open it right now
+    } else if (droppy.socket.readyState === 3) {
+      // closed
+      // Socket is closed, we can re-open it right now
       openSocket();
     }
   }
@@ -495,73 +530,87 @@ function sendMessage(vId, type, data) {
 //  Authentication page
 // ============================================================================
 function initAuthPage(firstrun) {
-  $("#remember").off("click").on("click", function() {
-    $(this).toggleClass("checked");
-  });
-  $("#form").off("submit").on("submit", (e) => {
-    e.preventDefault();
-    ajax({
-      method: "POST",
-      url: firstrun ? "!/adduser" : "!/login",
-      data: {
-        username: $("#user")[0].value,
-        password: $("#pass")[0].value,
-        remember: $("#remember").hasClass("checked"),
-        path: getRootPath(),
-      }
-    }).then((res) => {
-      if (res.status === 200) {
-        render("main");
-        initMainPage();
-      } else {
-        const info = $("#login-info-box");
-        info.textContent = firstrun ? "Please fill both fields." : "Wrong login!";
-        if (info.hasClass("error")) {
-          info.addClass("shake");
-          setTimeout(() => {
-            info.removeClass("shake");
-          }, 500);
-        } else info[0].className = "error";
-        if (!firstrun) $("#pass")[0].focus();
-      }
+  $("#remember")
+    .off("click")
+    .on("click", function () {
+      $(this).toggleClass("checked");
     });
-  });
+  $("#form")
+    .off("submit")
+    .on("submit", (e) => {
+      e.preventDefault();
+      ajax({
+        method: "POST",
+        url: firstrun ? "!/adduser" : "!/login",
+        data: {
+          username: $("#user")[0].value,
+          password: $("#pass")[0].value,
+          remember: $("#remember").hasClass("checked"),
+          path: getRootPath(),
+        },
+      }).then((res) => {
+        if (res.status === 200) {
+          render("main");
+          initMainPage();
+        } else {
+          const info = $("#login-info-box");
+          info.textContent = firstrun
+            ? "Please fill both fields."
+            : "Wrong login!";
+          if (info.hasClass("error")) {
+            info.addClass("shake");
+            setTimeout(() => {
+              info.removeClass("shake");
+            }, 500);
+          } else info[0].className = "error";
+          if (!firstrun) $("#pass")[0].focus();
+        }
+      });
+    });
 }
 // ============================================================================
 //  Main page
 // ============================================================================
 function initMainPage() {
   droppy.initialized = false;
-    // Open the WebSocket
+  // Open the WebSocket
   openSocket();
 
-    // Re-fit path line after 25ms of no resizing
-  $(window).off("resize").on("resize", () => {
-    clearTimeout(droppy.resizeTimer);
-    droppy.resizeTimer = setTimeout(() => {
-      $(".view").each(function() {
-        checkPathOverflow($(this));
-      });
-    }, 25);
-  });
+  // Re-fit path line after 25ms of no resizing
+  $(window)
+    .off("resize")
+    .on("resize", () => {
+      clearTimeout(droppy.resizeTimer);
+      droppy.resizeTimer = setTimeout(() => {
+        $(".view").each(function () {
+          checkPathOverflow($(this));
+        });
+      }, 25);
+    });
 
-  Mousetrap.bind("escape", () => { // escape hides modals
+  Mousetrap.bind("escape", () => {
+    // escape hides modals
     toggleCatcher(false);
-  }).bind("mod+s", (e) => { // stop default browser save behaviour
-    e.preventDefault();
-  }).bind(["space", "down", "right", "return"], () => {
-    const view = getActiveView();
-    if (view[0].dataset.type === "media") view[0].ps.next();
-  }).bind(["shift+space", "up", "left", "backspace"], () => {
-    const view = getActiveView();
-    if (view[0].dataset.type === "media") view[0].ps.prev();
-  }).bind(["alt+enter", "f"], () => {
-    const view = getActiveView();
-    if (!view || view[0].dataset.type !== "media") return;
-    screenfull.toggle(view.find(".content")[0]);
-  });
+  })
+    .bind("mod+s", (e) => {
+      // stop default browser save behaviour
+      e.preventDefault();
+    })
+    .bind(["space", "down", "right", "return"], () => {
+      const view = getActiveView();
+      if (view[0].dataset.type === "media") view[0].ps.next();
+    })
+    .bind(["shift+space", "up", "left", "backspace"], () => {
+      const view = getActiveView();
+      if (view[0].dataset.type === "media") view[0].ps.prev();
+    })
+    .bind(["alt+enter", "f"], () => {
+      const view = getActiveView();
+      if (!view || view[0].dataset.type !== "media") return;
+      screenfull.toggle(view.find(".content")[0]);
+    });
 
-    // track active view
+  // track active view
   $(window).on("click dblclick contextmenu", (e) => {
     const view = $(e.target).parents(".view");
     if (!view.length) return;
@@ -569,7 +618,7 @@ function initMainPage() {
     toggleButtons(view, view[0].dataset.type);
   });
 
-    // handle pasting text and images in directory view
+  // handle pasting text and images in directory view
   window.addEventListener("paste", async (e) => {
     if (e.target.nodeName && e.target.nodeName === "INPUT") {
       // Pasting into an input element, so don't continue.
@@ -578,7 +627,8 @@ function initMainPage() {
 
     const view = getActiveView();
     if (view[0].dataset.type !== "directory") return;
-    if (e.clipboardData && e.clipboardData.items) { // modern browsers
+    if (e.clipboardData && e.clipboardData.items) {
+      // modern browsers
       const texts = [];
       const images = [];
 
@@ -588,24 +638,27 @@ function initMainPage() {
         }
       }
 
-            // this API is weirdly implemented in Chrome. A pasted image consists of two items,
-            // if the text item is read first, the image item will not be available.
+      // this API is weirdly implemented in Chrome. A pasted image consists of two items,
+      // if the text item is read first, the image item will not be available.
       for (const item of e.clipboardData.items) {
         if (item.kind === "string") {
           const text = await promisify(item.getAsString.bind(item))();
-          texts.push(new Blob([text], {type: "text/plain"}));
+          texts.push(new Blob([text], { type: "text/plain" }));
         }
       }
 
-            // if a image is found, don't upload additional text blobs
+      // if a image is found, don't upload additional text blobs
       if (images.length) {
-        images.forEach(image => uploadBlob(view, image));
+        images.forEach((image) => uploadBlob(view, image));
       } else {
         texts.forEach((text) => uploadBlob(view, text));
       }
-    } else if (e.clipboardData.types) { // Safari specific
+    } else if (e.clipboardData.types) {
+      // Safari specific
       if (e.clipboardData.types.includes("text/plain")) {
-        const blob = new Blob([e.clipboardData.getData("Text")], {type: "text/plain"});
+        const blob = new Blob([e.clipboardData.getData("Text")], {
+          type: "text/plain",
+        });
         uploadBlob(view, blob);
         $(".ce").empty();
         if (droppy.savedFocus) droppy.savedFocus.focus();
@@ -616,7 +669,7 @@ function initMainPage() {
           if (!images.length && performance.now() - start < 5000) {
             return setTimeout(findImages, 25);
           }
-          images.each(function() {
+          images.each(function () {
             urlToPngBlob(this.src, (blob) => {
               uploadBlob(view, blob);
               $(".ce").empty();
@@ -628,7 +681,7 @@ function initMainPage() {
     }
   });
 
-    // Hacks for Safari to be able to paste
+  // Hacks for Safari to be able to paste
   if (droppy.detects.safari) {
     $("body").append('<div class="ce" contenteditable>');
     window.addEventListener("keydown", (e) => {
@@ -644,7 +697,7 @@ function initMainPage() {
   $("body").attr("theme", droppy.get("interfaceTheme"));
 
   screenfull.on("change", () => {
-        // unfocus the fullscreen button so the space key won't un-toggle fullscreen
+    // unfocus the fullscreen button so the space key won't un-toggle fullscreen
     document.activeElement.blur();
     $("svg.fullscreen, svg.unfullscreen").replaceWith(
       svg(screenfull.isFullscreen ? "unfullscreen" : "fullscreen")
@@ -680,27 +733,39 @@ function upload(view, fd, files) {
       }
     });
     if (conflict) {
-      rename = !window.confirm("Some of the uploaded files already exist. Overwrite them?");
+      rename = !window.confirm(
+        "Some of the uploaded files already exist. Overwrite them?"
+      );
     }
   }
 
   if (!files || !files.length) return showError(view, "Unable to upload.");
-  const id = view[0].uploadId += 1;
+  const id = (view[0].uploadId += 1);
   const xhr = new XMLHttpRequest();
 
-    // Render upload bar
-  $(Handlebars.templates["upload-info"]({
-    id,
-    title: files.length === 1 ? basename(files[0]) : `${files.length} files`,
-  })).appendTo(view).transition("in").find(".upload-cancel").off("click").on("click", () => {
-    xhr.abort();
-    uploadCancel(view, id);
-  });
+  // Render upload bar
+  $(
+    Handlebars.templates["upload-info"]({
+      id,
+      title: files.length === 1 ? basename(files[0]) : `${files.length} files`,
+    })
+  )
+    .appendTo(view)
+    .transition("in")
+    .find(".upload-cancel")
+    .off("click")
+    .on("click", () => {
+      xhr.abort();
+      uploadCancel(view, id);
+    });
 
-    // Create the XHR2 and bind the progress events
-  xhr.upload.addEventListener("progress", throttle(e => {
-    if (e && e.lengthComputable) uploadProgress(view, id, e.loaded, e.total);
-  }, 100));
+  // Create the XHR2 and bind the progress events
+  xhr.upload.addEventListener(
+    "progress",
+    throttle((e) => {
+      if (e && e.lengthComputable) uploadProgress(view, id, e.loaded, e.total);
+    }, 100)
+  );
   xhr.upload.addEventListener("error", () => {
     showError(view, "An error occurred during upload.");
     uploadCancel(view, id);
@@ -709,7 +774,8 @@ function upload(view, fd, files) {
     if (xhr.readyState !== 4) return;
     if (xhr.status === 200) {
       uploadSuccess(id);
-    } else if (xhr.status === 400) { // generic client error
+    } else if (xhr.status === 400) {
+      // generic client error
       uploadCancel(view, id);
     } else {
       if (xhr.status === 0) return; // cancelled by user
@@ -722,9 +788,12 @@ function upload(view, fd, files) {
   view[0].isUploading = true;
   view[0].uploadStart = performance.now();
 
-  xhr.open("POST", `${getRootPath()}!/upload?vId=${view[0].vId
-  }&to=${encodeURIComponent(view[0].currentFolder)
-  }&rename=${rename ? "1" : "0"}`);
+  xhr.open(
+    "POST",
+    `${getRootPath()}!/upload?vId=${view[0].vId}&to=${encodeURIComponent(
+      view[0].currentFolder
+    )}&rename=${rename ? "1" : "0"}`
+  );
   xhr.responseType = "text";
   xhr.send(fd);
 }
@@ -743,11 +812,16 @@ function uploadCancel(view, id) {
 function uploadFinish(view, id, cancelled) {
   view[0].isUploading = false;
   setTitle(basename(view[0].currentFolder));
-  $(`.upload-info[data-id="${id}"]`).removeClass("in").transitionend(function() {
-    $(this).remove();
-  });
+  $(`.upload-info[data-id="${id}"]`)
+    .removeClass("in")
+    .transitionend(function () {
+      $(this).remove();
+    });
   if (!cancelled) {
-    showNotification("Upload finished", `Upload to ${view[0].currentFolder} has finished!`);
+    showNotification(
+      "Upload finished",
+      `Upload to ${view[0].currentFolder} has finished!`
+    );
   }
 }
 
@@ -758,9 +832,10 @@ function uploadProgress(view, id, sent, total) {
   const now = performance.now();
   const speed = sent / ((now - view[0].uploadStart) / 1e3);
   const elapsed = now - view[0].uploadStart;
-  const secs = ((total / (sent / elapsed)) - elapsed) / 1000;
+  const secs = (total / (sent / elapsed) - elapsed) / 1000;
 
-  if (Number(view.find(".upload-info")[0].dataset.id) === id) setTitle(progress);
+  if (Number(view.find(".upload-info")[0].dataset.id) === id)
+    setTitle(progress);
   info.find(".upload-bar")[0].style.width = progress;
   info.find(".upload-percentage")[0].textContent = progress;
   info.find(".upload-time")[0].textContent = [
@@ -773,15 +848,18 @@ function uploadProgress(view, id, sent, total) {
 //  General helpers
 // ============================================================================
 function entryRename(view, entry, wasEmpty, callback) {
-    // Populate active files list
+  // Populate active files list
   const activeFiles = []; // TODO: Update when files change
-  entry.siblings(".data-row").each(function() { // exclude existing entry for case-only rename
+  entry.siblings(".data-row").each(function () {
+    // exclude existing entry for case-only rename
     $(this).removeClass("editing invalid");
-    const name = droppy.caseSensitive ? this.dataset.name : this.dataset.name.toLowerCase();
+    const name = droppy.caseSensitive
+      ? this.dataset.name
+      : this.dataset.name.toLowerCase();
     if (name) activeFiles.push(name);
   });
 
-    // Hide menu, overlay and the original link, stop any previous edits
+  // Hide menu, overlay and the original link, stop any previous edits
   toggleCatcher(false);
   const link = entry.find(".entry-link");
   const linkText = link[0].textContent;
@@ -789,21 +867,30 @@ function entryRename(view, entry, wasEmpty, callback) {
   entry.addClass("editing");
 
   // Add inline element
-  const renamer = $('<input type="text" class="inline-namer">').val(linkText).attr("placeholder", linkText);
+  const renamer = $('<input type="text" class="inline-namer">')
+    .val(linkText)
+    .attr("placeholder", linkText);
   renamer.insertAfter(link);
 
-  renamer.off("input").on("input", function() {
-    const input = this.value;
-    const valid = validFilename(input, droppy.platform);
-    const exists = activeFiles.some((file) => {
-      return file === (droppy.caseSensitive ? input : input.toLowerCase());
-    });
-    canSubmit = valid && !exists;
-    entry[canSubmit ? "removeClass" : "addClass"]("invalid");
-  }).off("blur focusout").on("blur focusout", submitEdit.bind(null, view, true, callback));
+  renamer
+    .off("input")
+    .on("input", function () {
+      const input = this.value;
+      const valid = validFilename(input, droppy.platform);
+      const exists = activeFiles.some((file) => {
+        return file === (droppy.caseSensitive ? input : input.toLowerCase());
+      });
+      canSubmit = valid && !exists;
+      entry[canSubmit ? "removeClass" : "addClass"]("invalid");
+    })
+    .off("blur focusout")
+    .on("blur focusout", submitEdit.bind(null, view, true, callback));
 
   const nameLength = linkText.lastIndexOf(".");
-  renamer[0].setSelectionRange(0, nameLength > -1 ? nameLength : linkText.length);
+  renamer[0].setSelectionRange(
+    0,
+    nameLength > -1 ? nameLength : linkText.length
+  );
   renamer[0].focus();
 
   Mousetrap(renamer[0])
@@ -827,7 +914,11 @@ function entryRename(view, entry, wasEmpty, callback) {
       stopEdit(view, entry, wasEmpty);
     }
     if (typeof success === "boolean" && typeof callback === "function") {
-      callback(success, join(view[0].currentFolder, oldVal), join(view[0].currentFolder, newVal));
+      callback(
+        success,
+        join(view[0].currentFolder, oldVal),
+        join(view[0].currentFolder, newVal)
+      );
     }
   }
 }
@@ -835,19 +926,30 @@ function entryRename(view, entry, wasEmpty, callback) {
 function stopEdit(view, entry, wasEmpty) {
   entry.removeClass("editing invalid");
   view.find(".inline-namer, .data-row.new-file, .data-row.new-folder").remove();
-  if (wasEmpty) view.find(".content").html(Handlebars.templates.directory({entries: []}));
+  if (wasEmpty)
+    view.find(".content").html(Handlebars.templates.directory({ entries: [] }));
 }
 
 function toggleCatcher(show) {
   const cc = $("#overlay"),
-    modals = ["#prefs-box", "#about-box", "#entry-menu", "#drop-select", ".info-box"];
+    modals = [
+      "#prefs-box",
+      "#about-box",
+      "#entry-menu",
+      "#drop-select",
+      ".info-box",
+    ];
 
   if (show === undefined) {
-    show = modals.some((selector) => { return $(selector).hasClass("in"); });
+    show = modals.some((selector) => {
+      return $(selector).hasClass("in");
+    });
   }
 
   if (!show) {
-    modals.forEach((selector) => { $(selector)[show ? "addClass" : "removeClass"]("in"); });
+    modals.forEach((selector) => {
+      $(selector)[show ? "addClass" : "removeClass"]("in");
+    });
     $(".data-row.active").removeClass("active");
   }
 
@@ -861,16 +963,20 @@ function setTitle(text) {
 }
 
 // Listen for popstate events, which indicate the user navigated back
-$(window).off("popstate").on("popstate", () => {
-  if (!droppy.socket) return;
-  const locs = getLocationsFromHash();
-  droppy.views.forEach((view) => {
-    const dest = locs[view.vId];
-    view.switchRequest = true;
-    setTimeout(() => { view.switchRequest = false; }, 1000);
-    if (dest) updateLocation($(view), dest, true);
+$(window)
+  .off("popstate")
+  .on("popstate", () => {
+    if (!droppy.socket) return;
+    const locs = getLocationsFromHash();
+    droppy.views.forEach((view) => {
+      const dest = locs[view.vId];
+      view.switchRequest = true;
+      setTimeout(() => {
+        view.switchRequest = false;
+      }, 1000);
+      if (dest) updateLocation($(view), dest, true);
+    });
   });
-});
 
 function getViewLocation(view) {
   if (view[0].currentFolder === undefined) {
@@ -918,14 +1024,15 @@ function replaceHistory(view, dest) {
 
 // Update our current location and change the URL to it
 function updateLocation(view, destination, skipPush) {
-  if (typeof destination.length !== "number") throw new Error("Destination needs to be string or array");
-    // Queue the folder switching if we are mid-animation or waiting for the server
+  if (typeof destination.length !== "number")
+    throw new Error("Destination needs to be string or array");
+  // Queue the folder switching if we are mid-animation or waiting for the server
   function sendReq(view, viewDest, time) {
     (function queue(time) {
       if ((!droppy.socketWait && !view[0].isAnimating) || time > 2000) {
         const viewLoc = getViewLocation(view);
         showSpinner(view);
-                // Find the direction in which we should animate
+        // Find the direction in which we should animate
         if (!viewLoc || viewDest.length === viewLoc.length) {
           view[0].animDirection = "center";
         } else if (viewDest.length > viewLoc.length) {
@@ -936,15 +1043,18 @@ function updateLocation(view, destination, skipPush) {
 
         sendMessage(view[0].vId, "REQUEST_UPDATE", viewDest);
 
-                // Skip the push if we're already navigating through history
+        // Skip the push if we're already navigating through history
         if (!skipPush) pushHistory(view, viewDest);
       } else setTimeout(queue, 50, time + 50);
     })(time);
   }
   if (view === null) {
-        // Only when navigating backwards
+    // Only when navigating backwards
     for (let i = destination.length - 1; i >= 0; i--) {
-      if (destination[i].length && getViewLocation(getView(i)) !== destination[i]) {
+      if (
+        destination[i].length &&
+        getViewLocation(getView(i)) !== destination[i]
+      ) {
         sendReq(getView(i), destination[i], 0);
       }
     }
@@ -953,7 +1063,8 @@ function updateLocation(view, destination, skipPush) {
 
 // Update the path indicator
 function updatePath(view) {
-  let oldParts, pathStr = "";
+  let oldParts,
+    pathStr = "";
   let i = 1; // Skip the first element as it's always the same
   const parts = join(view[0].currentFolder).split("/");
 
@@ -965,11 +1076,14 @@ function updatePath(view) {
     while (parts[i] || oldParts[i]) {
       pathStr += `/${parts[i]}`;
       if (parts[i] !== oldParts[i]) {
-        if (!parts[i] && oldParts[i] !== parts[i]) { // remove this part
+        if (!parts[i] && oldParts[i] !== parts[i]) {
+          // remove this part
           removePart(i);
-        } else if (!oldParts[i] && oldParts[i] !== parts[i]) { // Add a part
+        } else if (!oldParts[i] && oldParts[i] !== parts[i]) {
+          // Add a part
           addPart(parts[i], pathStr);
-        } else { // rename part
+        } else {
+          // rename part
           const part = $(view.find(".path li")[i]);
           part.html(`<a>${parts[i]}</a>${svg("triangle")}`);
           part[0].dataset.destination = pathStr;
@@ -986,14 +1100,16 @@ function updatePath(view) {
   }
 
   view.find(".path li:not(.gone)").transition("in");
-  setTimeout(() => { checkPathOverflow(view); }, 400);
+  setTimeout(() => {
+    checkPathOverflow(view);
+  }, 400);
 
   view[0].savedParts = parts;
 
   function addPart(name, path) {
     const li = $(`<li><a>${name}</a></li>`);
     li[0].dataset.destination = path;
-    li.off("click").on("click", function(event) {
+    li.off("click").on("click", function (event) {
       const view = $(event.target).parents(".view");
       if (droppy.socketWait) return;
       if ($(this).is(":last-child")) {
@@ -1004,16 +1120,22 @@ function updatePath(view) {
         view[0].switchRequest = true; // This is set so we can switch out of a editor view
         updateLocation(view, this.dataset.destination);
       }
-      setTimeout(() => { checkPathOverflow(view); }, 400);
+      setTimeout(() => {
+        checkPathOverflow(view);
+      }, 400);
     });
     view.find(".path").append(li);
     li.append(svg("triangle"));
   }
 
   function removePart(i) {
-    view.find(".path li").slice(i).replaceClass("in", "gone").transitionend(function() {
-      $(this).remove();
-    });
+    view
+      .find(".path li")
+      .slice(i)
+      .replaceClass("in", "gone")
+      .transitionend(function () {
+        $(this).remove();
+      });
   }
 }
 
@@ -1021,10 +1143,10 @@ function updatePath(view) {
 function checkPathOverflow(view) {
   let width = 40;
   const space = view[0].clientWidth;
-  view.find(".path li.in").each(function() {
+  view.find(".path li.in").each(function () {
     width += $(this)[0].clientWidth;
   });
-  view.find(".path li").each(function() {
+  view.find(".path li").each(function () {
     this.style.left = width > space ? `${space - width}px` : 0;
   });
 }
@@ -1046,7 +1168,9 @@ function getTemplateEntries(view, data) {
       age: timeDifference(mtime),
       size,
       psize: formatBytes(size),
-      id: ((view[0].currentFolder === "/") ? "/" : `${view[0].currentFolder}/`) + name,
+      id:
+        (view[0].currentFolder === "/" ? "/" : `${view[0].currentFolder}/`) +
+        name,
       sprite: getSpriteClass(fileExtension(name)),
       classes: "",
     };
@@ -1072,10 +1196,13 @@ function getTemplateEntries(view, data) {
 
 // Convert the received data into HTML
 function openDirectory(view, data, isSearch) {
-  let entries = view[0].templateEntries = getTemplateEntries(view, data || []);
+  let entries = (view[0].templateEntries = getTemplateEntries(
+    view,
+    data || []
+  ));
   clearSearch(view);
 
-    // sorting
+  // sorting
   const sortings = droppy.get("sortings");
   const savedSorting = sortings[view[0].currentFolder];
 
@@ -1087,95 +1214,130 @@ function openDirectory(view, data, isSearch) {
   entries = sortArrayByProp(entries, sortBy);
   if (view[0].sortAsc) entries.reverse();
 
-  const sort = {type: "", mtime: "", size: ""};
+  const sort = { type: "", mtime: "", size: "" };
   sort[sortBy] = `active ${view[0].sortAsc ? "up" : "down"}`;
 
-  const html = Handlebars.templates.directory({entries, sort, isSearch});
+  const html = Handlebars.templates.directory({ entries, sort, isSearch });
   loadContent(view, "directory", null, html).then(() => {
-        // Upload button on empty page
-    view.find(".empty").off("click").on("click", (e) => {
-      const view = $(e.target).parents(".view");
-      const inp = view.find(".file");
-      if (droppy.detects.directoryUpload) {
-        droppy.dir.forEach((attr) => {
-          inp[0].removeAttribute(attr);
+    // Upload button on empty page
+    view
+      .find(".empty")
+      .off("click")
+      .on("click", (e) => {
+        const view = $(e.target).parents(".view");
+        const inp = view.find(".file");
+        if (droppy.detects.directoryUpload) {
+          droppy.dir.forEach((attr) => {
+            inp[0].removeAttribute(attr);
+          });
+        }
+        inp[0].click();
+      });
+
+    // Switch into a folder
+    view
+      .find(".folder-link")
+      .off("click")
+      .on("click", function (e) {
+        if (droppy.socketWait) return;
+        updateLocation(view, $(this).parents(".data-row")[0].dataset.id);
+        e.preventDefault();
+      });
+
+    // Click on a file link
+    view
+      .find(".file-link")
+      .off("click")
+      .on("click", function (e) {
+        if (droppy.socketWait) return;
+        const view = $(e.target).parents(".view");
+        openFile(view, view[0].currentFolder, e.target.textContent.trim(), {
+          ref: this,
         });
-      }
-      inp[0].click();
-    });
+        e.preventDefault();
+      });
 
-        // Switch into a folder
-    view.find(".folder-link").off("click").on("click", function(e) {
-      if (droppy.socketWait) return;
-      updateLocation(view, $(this).parents(".data-row")[0].dataset.id);
-      e.preventDefault();
-    });
-
-        // Click on a file link
-    view.find(".file-link").off("click").on("click", function(e) {
-      if (droppy.socketWait) return;
-      const view = $(e.target).parents(".view");
-      openFile(view, view[0].currentFolder, e.target.textContent.trim(), {ref: this});
-      e.preventDefault();
-    });
-
-    view.find(".data-row").each(function(index) {
+    view.find(".data-row").each(function (index) {
       this.setAttribute("order", index);
     });
 
-    view.find(".data-row").off("contextmenu").on("contextmenu", (e) => {
-      const target = $(e.currentTarget);
-      if (target[0].dataset.type === "error") return;
-      showEntryMenu(target, e.clientX, e.clientY);
-      e.preventDefault();
-    });
-
-    view.find(".data-row .entry-menu").off("click").on("click", (e) => {
-      showEntryMenu($(e.target).parents(".data-row"), e.clientX, e.clientY);
-    });
-
-        // Stop navigation when clicking on an <a>
-    view.find(".data-row .zip, .data-row .download, .entry-link.file").off("click").on("click", (e) => {
-      e.stopPropagation();
-      if (droppy.socketWait) return;
-
-            // Some browsers (like IE) think that clicking on an <a> is real navigation
-            // and will close the WebSocket in turn. We'll reconnect if necessary.
-            // Firefox is not affected as long as the <a> bears a `download` attribute,
-            // if it's missing it will disconnect a WebSocket as long as
-            // https://bugzilla.mozilla.org/show_bug.cgi?id=896666 is not fixed.
-      droppy.reopen = true;
-      setTimeout(() => {
-        droppy.reopen = false;
-      }, 2000);
-    });
-
-    view.find(".share-file").off("click").on("click", function() {
-      if (droppy.socketWait) return;
-      requestLink(
-        $(this).parents(".view"),
-        $(this).parents(".data-row")[0].dataset.id,
-        droppy.get("sharelinkDownload")
-      );
-    });
-
-    view.find(".delete-file").off("click").on("click", function() {
-      const dataset = $(this).parents(".data-row")[0].dataset;
-
-      showConfirmation(`Are you sure you want to delete the ${dataset.type} "${dataset.name}"?`, () => {
-        if (droppy.socketWait) return;
-        showSpinner(view);
-        sendMessage(view[0].vId, "DELETE_FILE", dataset.id);
+    view
+      .find(".data-row")
+      .off("contextmenu")
+      .on("contextmenu", (e) => {
+        const target = $(e.currentTarget);
+        if (target[0].dataset.type === "error") return;
+        showEntryMenu(target, e.clientX, e.clientY);
+        e.preventDefault();
       });
-    });
 
-    view.find(".icon-play, .icon-view").off("click").on("click", function() {
-      $(this).parents(".data-row").find(".file-link")[0].click();
-    });
+    view
+      .find(".data-row .entry-menu")
+      .off("click")
+      .on("click", (e) => {
+        showEntryMenu($(e.target).parents(".data-row"), e.clientX, e.clientY);
+      });
 
-    view.find(".header-name, .header-mtime, .header-size").off("click").on("click", function() {
-      sortByHeader(view, $(this));
-    });
+    // Stop navigation when clicking on an <a>
+    view
+      .find(".data-row .zip, .data-row .download, .entry-link.file")
+      .off("click")
+      .on("click", (e) => {
+        e.stopPropagation();
+        if (droppy.socketWait) return;
+
+        // Some browsers (like IE) think that clicking on an <a> is real navigation
+        // and will close the WebSocket in turn. We'll reconnect if necessary.
+        // Firefox is not affected as long as the <a> bears a `download` attribute,
+        // if it's missing it will disconnect a WebSocket as long as
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=896666 is not fixed.
+        droppy.reopen = true;
+        setTimeout(() => {
+          droppy.reopen = false;
+        }, 2000);
+      });
+
+    view
+      .find(".share-file")
+      .off("click")
+      .on("click", function () {
+        if (droppy.socketWait) return;
+        requestLink(
+          $(this).parents(".view"),
+          $(this).parents(".data-row")[0].dataset.id,
+          droppy.get("sharelinkDownload")
+        );
+      });
+
+    view
+      .find(".delete-file")
+      .off("click")
+      .on("click", function () {
+        const dataset = $(this).parents(".data-row")[0].dataset;
+
+        showConfirmation(
+          `Are you sure you want to delete the ${dataset.type} "${dataset.name}"?`,
+          () => {
+            if (droppy.socketWait) return;
+            showSpinner(view);
+            sendMessage(view[0].vId, "DELETE_FILE", dataset.id);
+          }
+        );
+      });
+
+    view
+      .find(".icon-play, .icon-view")
+      .off("click")
+      .on("click", function () {
+        $(this).parents(".data-row").find(".file-link")[0].click();
+      });
+
+    view
+      .find(".header-name, .header-mtime, .header-size")
+      .off("click")
+      .on("click", function () {
+        sortByHeader(view, $(this));
+      });
 
     hideSpinner(view);
   });
@@ -1183,7 +1345,7 @@ function openDirectory(view, data, isSearch) {
 
 // Load new view content
 function loadContent(view, type, mediaType, content) {
-  return new Promise(((resolve) => {
+  return new Promise((resolve) => {
     if (view[0].isAnimating) return; // Ignore mid-animation updates. TODO: queue and update on animation-end
     view[0].dataset.type = type;
     mediaType = mediaType ? ` type-${mediaType}` : "";
@@ -1197,18 +1359,30 @@ function loadContent(view, type, mediaType, content) {
       view.children(".content-container").append(content);
       view[0].isAnimating = true;
       view.find(".data-row").addClass("animating");
-      view.find(".content:not(.new)").replaceClass(navRegex, (view[0].animDirection === "forward") ?
-        "back" : (view[0].animDirection === "back") ? "forward" : "center");
-      getOtherViews(view[0].vId).each(function() {
+      view
+        .find(".content:not(.new)")
+        .replaceClass(
+          navRegex,
+          view[0].animDirection === "forward"
+            ? "back"
+            : view[0].animDirection === "back"
+            ? "forward"
+            : "center"
+        );
+      getOtherViews(view[0].vId).each(function () {
         this.style.zIndex = "1";
       });
-      view.find(".new").addClass(type).transition(navRegex, "center").transitionend(finish);
+      view
+        .find(".new")
+        .addClass(type)
+        .transition(navRegex, "center")
+        .transitionend(finish);
     }
     view[0].animDirection = "center";
 
     function finish() {
       view[0].isAnimating = false;
-      getOtherViews(view[0].vId).each(function() {
+      getOtherViews(view[0].vId).each(function () {
         this.style.zIndex = "auto";
       });
       view.find(".content:not(.new)").remove();
@@ -1220,11 +1394,13 @@ function loadContent(view, type, mediaType, content) {
       toggleButtons(view, type);
       resolve();
     }
-  }));
+  });
 }
 
 function toggleButtons(view, type) {
-  view.find(".af, .ad, .cf, .cd")[type === "directory" ? "removeClass" : "addClass"]("disabled");
+  const target = type === "directory" ? "removeClass" : "addClass";
+
+  view.find(".af, .ad, .cf, .cd")[target]("disabled");
 }
 
 function handleDrop(view, event, src, dst, spinner) {
@@ -1242,7 +1418,7 @@ function handleDrop(view, event, src, dst, spinner) {
     const x = event.originalEvent.clientX,
       y = event.originalEvent.clientY;
 
-        // Keep the drop-select in view
+    // Keep the drop-select in view
     const limit = dropSelect[0].offsetWidth / 2 - 20;
     let left;
 
@@ -1258,22 +1434,33 @@ function handleDrop(view, event, src, dst, spinner) {
     dropSelect[0].style.top = `${event.originalEvent.clientY}px`;
     dropSelect.addClass("in");
 
-    $(document.elementFromPoint(x, y)).addClass("active").one("mouseleave", function() {
-      $(this).removeClass("active");
-    });
+    $(document.elementFromPoint(x, y))
+      .addClass("active")
+      .one("mouseleave", function () {
+        $(this).removeClass("active");
+      });
     toggleCatcher(true);
-    dropSelect.children(".movefile").off("click").one("click", () => {
-      sendDrop(view, "cut", src, dst, spinner);
-      toggleCatcher(false);
-    });
-    dropSelect.children(".copyfile").off("click").one("click", () => {
-      sendDrop(view, "copy", src, dst, spinner);
-      toggleCatcher(false);
-    });
-    dropSelect.children(".viewfile").off("click").one("click", () => {
-      updateLocation(view, src);
-      toggleCatcher(false);
-    });
+    dropSelect
+      .children(".movefile")
+      .off("click")
+      .one("click", () => {
+        sendDrop(view, "cut", src, dst, spinner);
+        toggleCatcher(false);
+      });
+    dropSelect
+      .children(".copyfile")
+      .off("click")
+      .one("click", () => {
+        sendDrop(view, "copy", src, dst, spinner);
+        toggleCatcher(false);
+      });
+    dropSelect
+      .children(".viewfile")
+      .off("click")
+      .one("click", () => {
+        updateLocation(view, src);
+        toggleCatcher(false);
+      });
     return;
   }
 }
@@ -1284,18 +1471,20 @@ function sendDrop(view, type, src, dst, spinner) {
     sendMessage(view[0].vId, "CLIPBOARD", {
       type,
       src,
-      dst
+      dst,
     });
   }
 }
 
 // Set drag properties for internal drag sources
 function bindDragEvents(view) {
-  view.find(".data-row .entry-link").each(function() {
+  view.find(".data-row .entry-link").each(function () {
     this.setAttribute("draggable", "true");
   });
   view.off("dragstart").on("dragstart", (event) => {
-    const row = $(event.target).hasClass("data-row") ? $(event.target) : $(event.target).parents(".data-row");
+    const row = $(event.target).hasClass("data-row")
+      ? $(event.target)
+      : $(event.target).parents(".data-row");
 
     if (event.ctrlKey || event.metaKey || event.altKey) {
       view[0].dragAction = "copy";
@@ -1304,13 +1493,20 @@ function bindDragEvents(view) {
     }
 
     droppy.dragTimer.refresh(row[0].dataset.id);
-    event.originalEvent.dataTransfer.setData("text", JSON.stringify({
-      type: row[0].dataset.type,
-      path: row[0].dataset.id,
-    }));
+    event.originalEvent.dataTransfer.setData(
+      "text",
+      JSON.stringify({
+        type: row[0].dataset.type,
+        path: row[0].dataset.id,
+      })
+    );
     event.originalEvent.dataTransfer.effectAllowed = "copyMove";
     if ("setDragImage" in event.originalEvent.dataTransfer) {
-      event.originalEvent.dataTransfer.setDragImage(row.find(".sprite")[0], 0, 0);
+      event.originalEvent.dataTransfer.setDragImage(
+        row.find(".sprite")[0],
+        0,
+        0
+      );
     }
   });
 }
@@ -1319,7 +1515,7 @@ function DragTimer() {
   this.timer = null;
   this.data = "";
   this.isInternal = false;
-  this.refresh = function(data) {
+  this.refresh = function (data) {
     if (typeof data === "string") {
       this.data = data;
       this.isInternal = true;
@@ -1327,7 +1523,7 @@ function DragTimer() {
     clearTimeout(this.timer);
     this.timer = setTimeout(this.clear, 1000);
   };
-  this.clear = function() {
+  this.clear = function () {
     if (!this.isInternal) {
       $(".dropzone").removeClass("in");
     }
@@ -1350,7 +1546,8 @@ function bindHoverEvents(view) {
   view.off("dragenter").on("dragenter", (event) => {
     event.stopPropagation();
     droppy.activeView = view[0].vId;
-    const isInternal = event.originalEvent.dataTransfer.effectAllowed === "copyMove";
+    const isInternal =
+      event.originalEvent.dataTransfer.effectAllowed === "copyMove";
 
     let icon;
     if (view[0].dataset.type === "directory" && isInternal) {
@@ -1364,13 +1561,15 @@ function bindHoverEvents(view) {
     view.find(".dropzone svg").replaceWith(svg(icon));
     if (!dropZone.hasClass("in")) dropZone.addClass("in");
 
-    getOtherViews($(event.target).parents(".view")[0].vId).find(".dropzone").removeClass("in");
+    getOtherViews($(event.target).parents(".view")[0].vId)
+      .find(".dropzone")
+      .removeClass("in");
   });
 }
 
 function bindDropEvents(view) {
-    // file drop
-  (new Uppie())(view[0], (e, fd, files) => {
+  // file drop
+  new Uppie()(view[0], (e, fd, files) => {
     if (!files.length) return;
     if (droppy.readOnly) return showError(view, "Files are read-only.");
     e.stopPropagation();
@@ -1387,14 +1586,24 @@ function bindDropEvents(view) {
     if (!dragData) return;
     e.stopPropagation();
     dragData = JSON.parse(dragData);
-    if (view[0].dataset.type === "directory") { // dropping into a directory view
-      handleDrop(view, e, dragData.path, join(view[0].currentFolder, basename(dragData.path)), true);
-    } else { // dropping into a document/media view
+    if (view[0].dataset.type === "directory") {
+      // dropping into a directory view
+      handleDrop(
+        view,
+        e,
+        dragData.path,
+        join(view[0].currentFolder, basename(dragData.path)),
+        true
+      );
+    } else {
+      // dropping into a document/media view
       if (dragData.type === "folder") {
         view[0].dataset.type = "directory";
         updateLocation(view, dragData.path);
       } else {
-        if (join(view[0].currentFolder, view[0].currentFile) !== dragData.path) {
+        if (
+          join(view[0].currentFolder, view[0].currentFile) !== dragData.path
+        ) {
           openFile(view, dirname(dragData.path), basename(dragData.path));
         }
       }
@@ -1403,9 +1612,9 @@ function bindDropEvents(view) {
 }
 
 function initButtons(view) {
-    // Init upload <input>
+  // Init upload <input>
   view[0].fileInput = view.find(".file")[0];
-  (new Uppie())(view[0].fileInput, (e, fd, files) => {
+  new Uppie()(view[0].fileInput, (e, fd, files) => {
     const view = $(e.target).parents(".view");
     e.preventDefault();
     e.stopPropagation();
@@ -1414,11 +1623,11 @@ function initButtons(view) {
     view[0].fileInput.value = "";
   });
 
-    // File upload button
-  view.off("click", ".af").on("click", ".af", function(e) {
+  // File upload button
+  view.off("click", ".af").on("click", ".af", function (e) {
     if ($(this).hasClass("disabled")) return;
     const view = $(e.target).parents(".view");
-        // Remove the directory attributes so we get a file picker dialog
+    // Remove the directory attributes so we get a file picker dialog
     if (droppy.detects.directoryUpload) {
       droppy.dir.forEach((attr) => {
         view[0].fileInput.removeAttribute(attr);
@@ -1427,23 +1636,23 @@ function initButtons(view) {
     view[0].fileInput.click();
   });
 
-    // Disable the button when no directory upload is supported
+  // Disable the button when no directory upload is supported
   if (droppy.detects.directoryUpload) {
     view.find(".ad").addClass("disabled");
   }
 
-    // Directory upload button
-  view.off("click", ".ad").on("click", ".ad", function(e) {
+  // Directory upload button
+  view.off("click", ".ad").on("click", ".ad", function (e) {
     const view = $(e.target).parents(".view");
     if ($(this).hasClass("disabled")) {
       showError(getView(0), "Your browser doesn't support directory uploading");
     } else {
-            // Set the directory attribute so we get a directory picker dialog
+      // Set the directory attribute so we get a directory picker dialog
       droppy.dir.forEach((attr) => {
         view[0].fileInput.setAttribute(attr, attr);
       });
 
-            // Click the button to trigger a dialog
+      // Click the button to trigger a dialog
       if (view[0].fileInput.isFilesAndDirectoriesSupported) {
         view[0].fileInput.click();
       } else if (view[0].fileInput.chooseDirectory) {
@@ -1454,7 +1663,7 @@ function initButtons(view) {
     }
   });
 
-  view.off("click", ".cf, .cd").on("click", ".cf, .cd", function(e) {
+  view.off("click", ".cf, .cd").on("click", ".cf, .cd", function (e) {
     if ($(this).hasClass("disabled")) return;
     const view = $(e.target).parents(".view");
     const content = view.find(".content");
@@ -1498,7 +1707,7 @@ function initButtons(view) {
     if (droppy.socketWait) return;
     showSpinner(view);
     sendMessage(view[0].vId, "RELOAD_DIRECTORY", {
-      dir: view[0].currentFolder
+      dir: view[0].currentFolder,
     });
   });
 
@@ -1516,7 +1725,7 @@ function initButtons(view) {
     });
   });
 
-    // Search Box
+  // Search Box
   function doSearch(e) {
     if (e.target.value && String(e.target.value).trim()) {
       sendMessage(view[0].vId, "SEARCH", {
@@ -1527,18 +1736,22 @@ function initButtons(view) {
       openDirectory(view, view[0].currentData);
     }
   }
-  view.off("click", ".search.toggled-off").on("click", ".search.toggled-off", function() {
-    const search = $(this);
-    search.removeClass("toggled-off").addClass("toggled-on");
-    setTimeout(() => {
-      search.find("input")[0].focus();
-    }, 0);
-  });
-  view.off("click", ".search.toggled-on svg").on("click", ".search.toggled-on svg", function() {
-    const view = $(this).parents(".view");
-    openDirectory(view, view[0].currentData);
-  });
-  view.off("keyup", ".search input").on("keyup", ".search input", function(e) {
+  view
+    .off("click", ".search.toggled-off")
+    .on("click", ".search.toggled-off", function () {
+      const search = $(this);
+      search.removeClass("toggled-off").addClass("toggled-on");
+      setTimeout(() => {
+        search.find("input")[0].focus();
+      }, 0);
+    });
+  view
+    .off("click", ".search.toggled-on svg")
+    .on("click", ".search.toggled-on svg", function () {
+      const view = $(this).parents(".view");
+      openDirectory(view, view[0].currentData);
+    });
+  view.off("keyup", ".search input").on("keyup", ".search input", function (e) {
     if (e.keyCode === 27 /* escape */) {
       const view = $(this).parents(".view");
       openDirectory(view, view[0].currentData);
@@ -1548,126 +1761,159 @@ function initButtons(view) {
       doSearch(e);
     }
   });
-  view.off("input", ".search input").on("input", ".search input", debounce(doSearch, 1000));
-  view.off("click", ".globalsearch input").on("click", ".globalsearch input", (e) => {
-    e.stopPropagation();
-  });
+  view
+    .off("input", ".search input")
+    .on("input", ".search input", debounce(doSearch, 1000));
+  view
+    .off("click", ".globalsearch input")
+    .on("click", ".globalsearch input", (e) => {
+      e.stopPropagation();
+    });
 }
 
 function initEntryMenu() {
-    // Play an audio file
-  $("#entry-menu .play").off("click").on("click", (event) => {
-    event.stopPropagation();
+  // Play an audio file
+  $("#entry-menu .play")
+    .off("click")
+    .on("click", (event) => {
+      event.stopPropagation();
 
-    const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
-    const view = entry.parents(".view");
-
-    play(view, entry);
-    toggleCatcher(false);
-  });
-
-  $("#entry-menu .edit").off("click").on("click", (event) => {
-    event.stopPropagation();
-
-    const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
-    const view = entry.parents(".view");
-
-    toggleCatcher(false);
-    openFile(view, view[0].currentFolder, entry.find(".file-link")[0].textContent, {text: true});
-  });
-
-    // Click on a "open" link
-  $("#entry-menu .openfile").off("click").on("click", (event) => {
-    event.stopPropagation();
-
-    const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
-    const view = entry.parents(".view");
-
-    toggleCatcher(false);
-    if (entry[0].dataset.type === "folder") {
-      updateLocation(view, entry[0].dataset.id);
-    } else {
-      openFile(view, view[0].currentFolder, entry.find(".file-link")[0].textContent);
-    }
-  });
-
-    // Rename a file/folder
-  $("#entry-menu .rename").off("click").on("click", (event) => {
-    event.stopPropagation();
-    if (droppy.socketWait) return;
-
-    const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
-    const view = entry.parents(".view");
-
-    entryRename(view, entry, false, (success, oldVal, newVal) => {
-      if (success && newVal !== oldVal) {
-        showSpinner(view);
-        sendMessage(view[0].vId, "RENAME", {src: oldVal, dst: newVal});
-      }
-    });
-  });
-
-  $("#entry-menu .share").off("click").on("click", (event) => {
-    event.stopPropagation();
-    if (droppy.socketWait) return;
-
-    const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
-    const view = entry.parents(".view");
-
-    toggleCatcher(false);
-
-    requestLink(
-      view,
-      entry[0].dataset.id,
-      droppy.get("sharelinkDownload")
-    );
-  });
-
-    // Copy/cut a file/folder
-  $("#entry-menu .copy, #entry-menu .cut").off("click").on("click", function(event) {
-    event.stopPropagation();
-    toggleCatcher(false);
-    droppy.clipboard = {
-      type: this.className,
-      src: droppy.menuTargetId
-    };
-    checkClipboard();
-  });
-
-    // Delete a file/folder
-  $("#entry-menu .delete").off("click").on("click", (event) => {
-    event.stopPropagation();
-    toggleCatcher(false);
-    const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
-    const dataset = entry[0].dataset;
-
-    showConfirmation(`Are you sure you want to delete the ${dataset.type} "${dataset.name}"?`, () => {
-      if (droppy.socketWait) return;
-
+      const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
       const view = entry.parents(".view");
 
-      showSpinner(view);
-      sendMessage(view[0].vId, "DELETE_FILE", entry[0].dataset.id);
+      play(view, entry);
+      toggleCatcher(false);
     });
-  });
+
+  $("#entry-menu .edit")
+    .off("click")
+    .on("click", (event) => {
+      event.stopPropagation();
+
+      const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
+      const view = entry.parents(".view");
+
+      toggleCatcher(false);
+      openFile(
+        view,
+        view[0].currentFolder,
+        entry.find(".file-link")[0].textContent,
+        { text: true }
+      );
+    });
+
+  // Click on a "open" link
+  $("#entry-menu .openfile")
+    .off("click")
+    .on("click", (event) => {
+      event.stopPropagation();
+
+      const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
+      const view = entry.parents(".view");
+
+      toggleCatcher(false);
+      if (entry[0].dataset.type === "folder") {
+        updateLocation(view, entry[0].dataset.id);
+      } else {
+        openFile(
+          view,
+          view[0].currentFolder,
+          entry.find(".file-link")[0].textContent
+        );
+      }
+    });
+
+  // Rename a file/folder
+  $("#entry-menu .rename")
+    .off("click")
+    .on("click", (event) => {
+      event.stopPropagation();
+      if (droppy.socketWait) return;
+
+      const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
+      const view = entry.parents(".view");
+
+      entryRename(view, entry, false, (success, oldVal, newVal) => {
+        if (success && newVal !== oldVal) {
+          showSpinner(view);
+          sendMessage(view[0].vId, "RENAME", { src: oldVal, dst: newVal });
+        }
+      });
+    });
+
+  $("#entry-menu .share")
+    .off("click")
+    .on("click", (event) => {
+      event.stopPropagation();
+      if (droppy.socketWait) return;
+
+      const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
+      const view = entry.parents(".view");
+
+      toggleCatcher(false);
+
+      requestLink(view, entry[0].dataset.id, droppy.get("sharelinkDownload"));
+    });
+
+  // Copy/cut a file/folder
+  $("#entry-menu .copy, #entry-menu .cut")
+    .off("click")
+    .on("click", function (event) {
+      event.stopPropagation();
+      toggleCatcher(false);
+      droppy.clipboard = {
+        type: this.className,
+        src: droppy.menuTargetId,
+      };
+      checkClipboard();
+    });
+
+  // Delete a file/folder
+  $("#entry-menu .delete")
+    .off("click")
+    .on("click", (event) => {
+      event.stopPropagation();
+      toggleCatcher(false);
+      const entry = $(`.data-row[data-id="${droppy.menuTargetId}"]`);
+      const dataset = entry[0].dataset;
+
+      showConfirmation(
+        `Are you sure you want to delete the ${dataset.type} "${dataset.name}"?`,
+        () => {
+          if (droppy.socketWait) return;
+
+          const view = entry.parents(".view");
+
+          showSpinner(view);
+          sendMessage(view[0].vId, "DELETE_FILE", entry[0].dataset.id);
+        }
+      );
+    });
 }
 
 // Check if there's something in the clipboard
 function checkClipboard() {
   if (droppy.clipboard) {
-    $(".view").each(function() {
+    $(".view").each(function () {
       const view = $(this),
         button = view.find(".paste-button");
-      button.addClass("in").off("click").one("click", (event) => {
-        event.stopPropagation();
-        if (droppy.socketWait) return;
-        droppy.clipboard.dst = join(view[0].currentFolder, basename(droppy.clipboard.src));
-        showSpinner(view);
-        sendMessage(view[0].vId, "CLIPBOARD", droppy.clipboard);
-        droppy.clipboard = null;
-        toggleCatcher(false);
-        $(".paste-button").removeClass("in");
-      }).transition("in");
+      button
+        .addClass("in")
+        .off("click")
+        .one("click", (event) => {
+          event.stopPropagation();
+          if (droppy.socketWait) return;
+          droppy.clipboard.dst = join(
+            view[0].currentFolder,
+            basename(droppy.clipboard.src)
+          );
+          showSpinner(view);
+          sendMessage(view[0].vId, "CLIPBOARD", droppy.clipboard);
+          droppy.clipboard = null;
+          toggleCatcher(false);
+          $(".paste-button").removeClass("in");
+        })
+        .transition("in");
     });
   } else {
     $(".paste-button").removeClass("in");
@@ -1677,7 +1923,7 @@ function checkClipboard() {
 function saveFile(text, filename) {
   const blob = new Blob([text]);
   const a = document.createElement("a");
-  a.setAttribute("href", URL.createObjectURL(blob, {type: "text/plain"}));
+  a.setAttribute("href", URL.createObjectURL(blob, { type: "text/plain" }));
   a.setAttribute("download", filename);
   a.style.display = "none";
   document.body.appendChild(a);
@@ -1709,8 +1955,9 @@ function showEntryMenu(entry, x, y) {
   menu[0].classList.add("in");
 
   let target = document.elementFromPoint(x, y);
-  target = target.tagName.toLowerCase() === "a" ? $(target) : $(target).parents("a");
-  target.addClass("active").one("mouseleave", function() {
+  target =
+    target.tagName.toLowerCase() === "a" ? $(target) : $(target).parents("a");
+  target.addClass("active").one("mouseleave", function () {
     $(this).removeClass("active");
   });
 }
@@ -1718,9 +1965,14 @@ function showEntryMenu(entry, x, y) {
 function sortByHeader(view, header) {
   view[0].sortBy = /header-(\w+)/.exec(header[0].className)[1];
   view[0].sortAsc = header.hasClass("down");
-  header[0].className = `header-${view[0].sortBy} ${view[0].sortAsc ? "up" : "down"} active`;
+  header[0].className = `header-${view[0].sortBy} ${
+    view[0].sortAsc ? "up" : "down"
+  } active`;
   header.siblings().removeClass("active up down");
-  let entries = sortArrayByProp(view[0].templateEntries, header[0].dataset.sort);
+  let entries = sortArrayByProp(
+    view[0].templateEntries,
+    header[0].dataset.sort
+  );
   if (view[0].sortAsc) entries = entries.reverse();
   entries.forEach((_, i) => {
     const entry = view.find(`[data-name="${entries[i].sortname}"]`)[0];
@@ -1728,9 +1980,12 @@ function sortByHeader(view, header) {
     entry.setAttribute("order", i);
   });
 
-    // save sorting to localStorage
+  // save sorting to localStorage
   const sortings = droppy.get("sortings");
-  sortings[view[0].currentFolder] = {sortBy: view[0].sortBy, sortAsc: view[0].sortAsc};
+  sortings[view[0].currentFolder] = {
+    sortBy: view[0].sortBy,
+    sortAsc: view[0].sortAsc,
+  };
   droppy.set("sortings", sortings);
 }
 
@@ -1745,13 +2000,13 @@ function openFile(view, newFolder, file, opts) {
   clearSearch(view);
   const e = fileExtension(file);
 
-    // Fix newFolder and file variables if file includes the dir path
+  // Fix newFolder and file variables if file includes the dir path
   if (file.includes("/")) {
     newFolder = join(view[0].currentFolder, dirname(file));
     file = basename(file);
   }
 
-    // Early exit for open-as-text
+  // Early exit for open-as-text
   if (opts.text) {
     view[0].currentFile = file;
     view[0].currentFolder = newFolder;
@@ -1761,14 +2016,16 @@ function openFile(view, newFolder, file, opts) {
     return;
   }
 
-    // Determine filetype and how to open it
-  if (Object.keys(droppy.imageTypes).includes(e)) { // Image
+  // Determine filetype and how to open it
+  if (Object.keys(droppy.imageTypes).includes(e)) {
+    // Image
     view[0].currentFile = file;
     view[0].currentFolder = newFolder;
     pushHistory(view, join(view[0].currentFolder, view[0].currentFile));
     updatePath(view);
     openMedia(view);
-  } else if (Object.keys(droppy.videoTypes).includes(e)) { // Video
+  } else if (Object.keys(droppy.videoTypes).includes(e)) {
+    // Video
     if (!droppy.detects.videoTypes[droppy.videoTypes[e]]) {
       showError(view, "Your browser can't play this file");
       updateLocation(view, view[0].currentFolder);
@@ -1778,14 +2035,15 @@ function openFile(view, newFolder, file, opts) {
       pushHistory(view, join(view[0].currentFolder, view[0].currentFile));
       updatePath(view);
 
-            // if there is audio playing, stop it
+      // if there is audio playing, stop it
       if (view[0].audioInitialized) {
         endAudio(view);
       }
 
       openMedia(view);
     }
-  } else if (Object.keys(droppy.audioTypes).includes(e)) { // Audio
+  } else if (Object.keys(droppy.audioTypes).includes(e)) {
+    // Audio
     if (opts.ref) {
       play(view, $(opts.ref).parents(".data-row"));
     }
@@ -1795,26 +2053,35 @@ function openFile(view, newFolder, file, opts) {
     pushHistory(view, join(view[0].currentFolder, view[0].currentFile));
     updatePath(view);
     openMedia(view);
-  } else { // Generic file, ask the server if the file has binary contents
+  } else {
+    // Generic file, ask the server if the file has binary contents
     const filePath = join(newFolder, file);
     showSpinner(view);
-    ajax({url: `!/type${filePath}`}).then((res) => {
-      return res.text();
-    }).then((text) => {
-      if (text === "text") { // Text content
-        view[0].currentFile = file;
-        view[0].currentFolder = newFolder;
-        pushHistory(view, filePath);
-        updatePath(view);
-        openDoc(view, filePath);
-      } else { // Binary content - download it
-        download(filePath);
+    ajax({ url: `!/type${filePath}` })
+      .then((res) => {
+        return res.text();
+      })
+      .then((text) => {
+        if (text === "text") {
+          // Text content
+          view[0].currentFile = file;
+          view[0].currentFolder = newFolder;
+          pushHistory(view, filePath);
+          updatePath(view);
+          openDoc(view, filePath);
+        } else {
+          // Binary content - download it
+          download(filePath);
+          hideSpinner(view);
+        }
+      })
+      .catch(() => {
+        showError(
+          view,
+          "Couldn't load the file. Maybe disable your ad-blocker?"
+        );
         hideSpinner(view);
-      }
-    }).catch(() => {
-      showError(view, "Couldn't load the file. Maybe disable your ad-blocker?");
-      hideSpinner(view);
-    });
+      });
   }
 }
 
@@ -1848,12 +2115,12 @@ function openMedia(view) {
 }
 
 function middle(ps) {
-  return {x: ps.viewportSize.x / 2, y: ps.viewportSize.y / 2};
+  return { x: ps.viewportSize.x / 2, y: ps.viewportSize.y / 2 };
 }
 
 function loadMedia(view, files) {
   let startIndex;
-    // turn filenames into URLs and obtain index of current file
+  // turn filenames into URLs and obtain index of current file
   files.forEach((file, i) => {
     if (file.src === view[0].currentFile) startIndex = i;
     file.src = getMediaSrc(view, file.src);
@@ -1888,7 +2155,7 @@ function loadMedia(view, files) {
       const fadeTime = droppy.detects.mobile ? 3500 : 2500; // TODO: match to plyr
       view[0].ps = new PhotoSwipe(el, PhotoSwipeUI_Default, files, {
         arrowKeys: false,
-        barsSize: {top: 0, bottom: 0},
+        barsSize: { top: 0, bottom: 0 },
         bgOpacity: 1,
         captionEl: false,
         clickToCloseNonZoomable: false,
@@ -1926,13 +2193,13 @@ function loadMedia(view, files) {
         loop[on ? "addClass" : "removeClass"]("on");
       });
 
-            // needed for plyr seeking
+      // needed for plyr seeking
       view[0].ps.listen("preventDragEvent", (e, _isDown, preventObj) => {
         if (!e || !e.target) return;
         preventObj.prevent = e.target.classList.contains("pswp__img");
       });
-      view[0].ps.listen("afterChange", function() {
-                // clear possible focus on buttons so spacebar works as expected
+      view[0].ps.listen("afterChange", function () {
+        // clear possible focus on buttons so spacebar works as expected
         const focused = document.activeElement;
         if ($(focused).hasClass("pswp__button")) focused.blur();
 
@@ -1957,7 +2224,9 @@ function loadMedia(view, files) {
           zoomButtons.removeClass("hidden");
           this.currItem.container.parentNode.style.overflow = "auto"; // allow pdf scrolling
           this.currItem.container.style.transformOrigin = "center top"; // center zoom out
-          view.find("video").each(function() { this.pause(); });
+          view.find("video").each(function () {
+            this.pause();
+          });
         } else if (type === "video") {
           initVideo($(this.currItem.container).find("video")[0]);
           imgButtons.addClass("hidden");
@@ -1967,7 +2236,9 @@ function loadMedia(view, files) {
           imgButtons.removeClass("hidden");
           videoButtons.addClass("hidden");
           zoomButtons.removeClass("hidden");
-          view.find("video").each(function() { this.pause(); });
+          view.find("video").each(function () {
+            this.pause();
+          });
         }
 
         setTitle(this.currItem.filename.replace(/\..*/g, ""));
@@ -1975,7 +2246,9 @@ function loadMedia(view, files) {
         updatePath(view);
       });
       view[0].ps.listen("preventDragEvent", (_, isDown) => {
-        view.find(".pswp__container")[0].classList[isDown ? "add" : "remove"]("no-transition");
+        view
+          .find(".pswp__container")[0]
+          .classList[isDown ? "add" : "remove"]("no-transition");
       });
       view[0].ps.listen("destroy", () => {
         view[0].switchRequest = true;
@@ -1983,8 +2256,8 @@ function loadMedia(view, files) {
         updateLocation(view, view[0].currentFolder);
       });
 
-            // fit zoom buttons
-      view[0].ps.zoomed = {h: false, v: false};
+      // fit zoom buttons
+      view[0].ps.zoomed = { h: false, v: false };
 
       function fitH() {
         const vw = view[0].ps.viewportSize.x,
@@ -2016,15 +2289,21 @@ function loadMedia(view, files) {
           fitV(true);
         }
       });
-      view.find(".zoom-in").off("click").on("click", (e) => {
-        const level = view[0].ps.getZoomLevel() * 1.5;
-        view[0].ps.zoomTo(level, middle(view[0].ps), 250);
-        $(e.target).parents(".pswp").addClass("pswp--zoomed-in");
-      });
-      view.find(".zoom-out").off("click").on("click", () => {
-        const level = view[0].ps.getZoomLevel() / 1.5;
-        view[0].ps.zoomTo(level, middle(view[0].ps), 250);
-      });
+      view
+        .find(".zoom-in")
+        .off("click")
+        .on("click", (e) => {
+          const level = view[0].ps.getZoomLevel() * 1.5;
+          view[0].ps.zoomTo(level, middle(view[0].ps), 250);
+          $(e.target).parents(".pswp").addClass("pswp--zoomed-in");
+        });
+      view
+        .find(".zoom-out")
+        .off("click")
+        .on("click", () => {
+          const level = view[0].ps.getZoomLevel() / 1.5;
+          view[0].ps.zoomTo(level, middle(view[0].ps), 250);
+        });
 
       view[0].ps.init();
       hideSpinner(view);
@@ -2045,30 +2324,32 @@ function initPDF(container) {
 
       const promises = [];
       for (let i = 1; i <= pdf.numPages; i++) {
-        promises.push(pdf.getPage(i).then((page) => {
-          const vp = page.getViewport({scale: 1});
-          const ratioX = availableWidth / vp.width;
-          const ratioY = availableHeight / vp.height;
-          const scale = Math.min(ratioX, ratioY);
-          const viewport = page.getViewport({scale: scale * quality});
-          const pageWidth = viewport.width / quality;
-          const pageHeight = viewport.height / quality;
+        promises.push(
+          pdf.getPage(i).then((page) => {
+            const vp = page.getViewport({ scale: 1 });
+            const ratioX = availableWidth / vp.width;
+            const ratioY = availableHeight / vp.height;
+            const scale = Math.min(ratioX, ratioY);
+            const viewport = page.getViewport({ scale: scale * quality });
+            const pageWidth = viewport.width / quality;
+            const pageHeight = viewport.height / quality;
 
-          const canvas = document.createElement("canvas");
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          canvas.style.width = `${pageWidth}px`;
-          canvas.style.height = `${pageHeight}px`;
-          container.append(canvas);
+            const canvas = document.createElement("canvas");
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            canvas.style.width = `${pageWidth}px`;
+            canvas.style.height = `${pageHeight}px`;
+            container.append(canvas);
 
-          if (pageWidth > maxWidth) maxWidth = pageWidth;
-          if (pageHeight > maxHeight) maxHeight = pageHeight;
+            if (pageWidth > maxWidth) maxWidth = pageWidth;
+            if (pageHeight > maxHeight) maxHeight = pageHeight;
 
-          page.render({
-            canvasContext: canvas.getContext("2d"),
-            viewport
-          });
-        }));
+            page.render({
+              canvasContext: canvas.getContext("2d"),
+              viewport,
+            });
+          })
+        );
       }
 
       Promise.all(promises).then(() => {
@@ -2091,7 +2372,7 @@ function saveCM(cm) {
   showSpinner(view);
   sendMessage(view[0].vId, "SAVE_FILE", {
     to: view[0].editorEntryId,
-    value: cm.getValue(view[0].lineEnding)
+    value: cm.getValue(view[0].lineEnding),
   });
 }
 
@@ -2103,22 +2384,24 @@ function openDoc(view, entryId) {
     loadStyle("cm-css", "!/res/lib/cm.css"),
     loadScript("cm-js", "!/res/lib/cm.js"),
     loadTheme(droppy.get("theme")),
-  ]).then((values) => {
-    (function verify() {
-      if (!("CodeMirror" in window)) return setTimeout(verify, 200);
-      setTitle(basename(entryId));
-      setEditorFontSize(droppy.get("editorFontSize"));
-      values[0].text().then((text) => {
-        configCM(text, basename(entryId));
-      });
-    })();
-  }).catch((err) => {
-    showError(view, err);
-    closeDoc(view);
-  });
+  ])
+    .then((values) => {
+      (function verify() {
+        if (!("CodeMirror" in window)) return setTimeout(verify, 200);
+        setTitle(basename(entryId));
+        setEditorFontSize(droppy.get("editorFontSize"));
+        values[0].text().then((text) => {
+          configCM(text, basename(entryId));
+        });
+      })();
+    })
+    .catch((err) => {
+      showError(view, err);
+      closeDoc(view);
+    });
 
   function configCM(text, filename) {
-    const html = Handlebars.templates.document({modes: droppy.modes});
+    const html = Handlebars.templates.document({ modes: droppy.modes });
     loadContent(view, "document", null, html).then(() => {
       view[0].editorEntryId = entryId;
       view[0].editor = editor = CodeMirror(view.find(".document")[0], {
@@ -2147,7 +2430,10 @@ function openDoc(view, entryId) {
         mode = fileMode;
       } else {
         const modeInfo = CodeMirror.findModeByFileName(filename);
-        mode = (!modeInfo || !modeInfo.mode || modeInfo.mode === "null") ? "plain" : modeInfo.mode;
+        mode =
+          !modeInfo || !modeInfo.mode || modeInfo.mode === "null"
+            ? "plain"
+            : modeInfo.mode;
       }
       if (mode !== "plain") CodeMirror.autoLoadMode(editor, mode);
       editor.setOption("mode", mode);
@@ -2156,20 +2442,26 @@ function openDoc(view, entryId) {
       editor.on("change", (cm, change) => {
         const view = getCMView(cm);
         if (change.origin !== "setValue") {
-          view.find(".path li:last-child").removeClass("saved save-failed").addClass("dirty");
+          view
+            .find(".path li:last-child")
+            .removeClass("saved save-failed")
+            .addClass("dirty");
         }
       });
 
       editor.setOption("extraKeys", {
-        "Tab"(cm) {
-          cm.replaceSelection(droppy.get("indentWithTabs") ?
-            "\t" : new Array(droppy.get("indentUnit") + 1).join(" "));
+        Tab(cm) {
+          cm.replaceSelection(
+            droppy.get("indentWithTabs")
+              ? "\t"
+              : new Array(droppy.get("indentUnit") + 1).join(" ")
+          );
         },
         "Cmd-S": saveCM,
-        "Ctrl-S": saveCM
+        "Ctrl-S": saveCM,
       });
 
-            // Let Mod-T through to the browser
+      // Let Mod-T through to the browser
       CodeMirror.keyMap.sublime["Cmd-T"] = false;
       CodeMirror.keyMap.sublime["Ctrl-T"] = false;
 
@@ -2182,38 +2474,62 @@ function openDoc(view, entryId) {
       editor.setValue(text);
       editor.clearHistory();
 
-      view.find(".exit").off("click").on("click", function() {
-        closeDoc($(this).parents(".view"));
-        editor = null;
-      });
-      view.find(".save").off("click").on("click", function() {
-        saveCM($(this).parents(".view")[0].editor);
-      });
-      view.find(".dl").off("click").on("click", () => {
-        saveFile(editor.getValue(), view[0].currentFile);
-      });
-      view.find(".ww").off("click").on("click", () => {
-        editor.setOption("lineWrapping", !editor.options.lineWrapping);
-        droppy.set("lineWrapping", editor.options.lineWrapping);
-      });
-      view.find(".syntax").off("click").on("click", () => {
-        const shown = view.find(".mode-select").toggleClass("in").hasClass("in");
-        view.find(".syntax")[shown ? "addClass" : "removeClass"]("in");
-        view.find(".mode-select").on("change", function() {
-          view.find(".syntax").removeClass("in");
-          view.find(".mode-select").removeClass("in");
-          CodeMirror.autoLoadMode(editor, this.value);
-          editor.setOption("mode", this.value);
+      view
+        .find(".exit")
+        .off("click")
+        .on("click", function () {
+          closeDoc($(this).parents(".view"));
+          editor = null;
         });
-      });
-      view.find(".find").off("click").on("click", () => {
-        CodeMirror.commands.find(editor);
-        const searchField = view.find(".CodeMirror-search-field");
-        if (searchField && searchField[0]) searchField[0].focus();
-      });
-      view.find(".full").off("click").on("click", function() {
-        screenfull.toggle($(this).parents(".content")[0]);
-      });
+      view
+        .find(".save")
+        .off("click")
+        .on("click", function () {
+          saveCM($(this).parents(".view")[0].editor);
+        });
+      view
+        .find(".dl")
+        .off("click")
+        .on("click", () => {
+          saveFile(editor.getValue(), view[0].currentFile);
+        });
+      view
+        .find(".ww")
+        .off("click")
+        .on("click", () => {
+          editor.setOption("lineWrapping", !editor.options.lineWrapping);
+          droppy.set("lineWrapping", editor.options.lineWrapping);
+        });
+      view
+        .find(".syntax")
+        .off("click")
+        .on("click", () => {
+          const shown = view
+            .find(".mode-select")
+            .toggleClass("in")
+            .hasClass("in");
+          view.find(".syntax")[shown ? "addClass" : "removeClass"]("in");
+          view.find(".mode-select").on("change", function () {
+            view.find(".syntax").removeClass("in");
+            view.find(".mode-select").removeClass("in");
+            CodeMirror.autoLoadMode(editor, this.value);
+            editor.setOption("mode", this.value);
+          });
+        });
+      view
+        .find(".find")
+        .off("click")
+        .on("click", () => {
+          CodeMirror.commands.find(editor);
+          const searchField = view.find(".CodeMirror-search-field");
+          if (searchField && searchField[0]) searchField[0].focus();
+        });
+      view
+        .find(".full")
+        .off("click")
+        .on("click", function () {
+          screenfull.toggle($(this).parents(".content")[0]);
+        });
       hideSpinner(view);
     });
   }
@@ -2222,45 +2538,51 @@ function openDoc(view, entryId) {
 function updateUsers(userlist) {
   if (Object.keys(userlist).length === 0) {
     toggleCatcher(false);
-    render("login", {first: true});
+    render("login", { first: true });
     initAuthPage(true);
     return;
   }
   const box = $("#prefs-box");
   box.find(".list-user").remove();
-  box.append(Handlebars.templates["list-user"]({users: userlist}));
-  box.find(".add-user").off("click").on("click", () => {
-    const user = prompt("Username?");
-    if (!user) return;
-    const pass = prompt("Password?");
-    if (!pass) return;
-    const priv = window.confirm("Privileged User?");
-    sendMessage(null, "UPDATE_USER", {
-      name: user,
-      pass,
-      priv
+  box.append(Handlebars.templates["list-user"]({ users: userlist }));
+  box
+    .find(".add-user")
+    .off("click")
+    .on("click", () => {
+      const user = prompt("Username?");
+      if (!user) return;
+      const pass = prompt("Password?");
+      if (!pass) return;
+      const priv = window.confirm("Privileged User?");
+      sendMessage(null, "UPDATE_USER", {
+        name: user,
+        pass,
+        priv,
+      });
     });
-  });
-  box.find(".delete-user").off("click").on("click", function(event) {
-    event.stopPropagation();
-    sendMessage(null, "UPDATE_USER", {
-      name: $(this).parents("li").children(".username").text().trim(),
-      pass: ""
+  box
+    .find(".delete-user")
+    .off("click")
+    .on("click", function (event) {
+      event.stopPropagation();
+      sendMessage(null, "UPDATE_USER", {
+        name: $(this).parents("li").children(".username").text().trim(),
+        pass: "",
+      });
     });
-  });
 }
 
 function showPrefs() {
   const box = $("#prefs-box");
   box.empty().append(() => {
     const opts = [
-      {name: "interfaceTheme", label: "Interface theme"},
-      {name: "theme", label: "Editor theme"},
-      {name: "editorFontSize", label: "Editor font size"},
-      {name: "indentWithTabs", label: "Editor indent type"},
-      {name: "indentUnit", label: "Editor indent width"},
-      {name: "lineWrapping", label: "Editor word wrap"},
-      {name: "sharelinkDownload", label: "Sharelink download"},
+      { name: "interfaceTheme", label: "Interface theme" },
+      { name: "theme", label: "Editor theme" },
+      { name: "editorFontSize", label: "Editor font size" },
+      { name: "indentWithTabs", label: "Editor indent type" },
+      { name: "indentUnit", label: "Editor indent width" },
+      { name: "lineWrapping", label: "Editor word wrap" },
+      { name: "sharelinkDownload", label: "Sharelink download" },
     ];
 
     let i;
@@ -2268,43 +2590,53 @@ function showPrefs() {
       opts[i].values = {};
       opts[i].selected = droppy.get(opts[i].name);
     });
-    for (const interfaceTheme of ["default", "dark"]) { opts[0].values[interfaceTheme] = interfaceTheme; }
-    droppy.themes.forEach((t) => { opts[1].values[t] = t; });
+    for (const interfaceTheme of ["default", "dark"]) {
+      opts[0].values[interfaceTheme] = interfaceTheme;
+    }
+    droppy.themes.forEach((t) => {
+      opts[1].values[t] = t;
+    });
     for (i = 10; i <= 30; i += 2) opts[2].values[String(i)] = String(i);
-    opts[3].values = {"Tabs": true, "Spaces": false};
+    opts[3].values = { Tabs: true, Spaces: false };
     for (i = 1; i <= 8; i *= 2) opts[4].values[String(i)] = String(i);
-    opts[5].values = {"Wrap": true, "No Wrap": false};
-    opts[6].values = {"Default On": true, "Default Off": false};
-    return Handlebars.templates.options({opts});
+    opts[5].values = { Wrap: true, "No Wrap": false };
+    opts[6].values = { "Default On": true, "Default Off": false };
+    return Handlebars.templates.options({ opts });
   });
 
-  $("select.theme").off("change").on("change", function() {
-    const theme = this.value;
-    loadTheme(theme, () => {
-      droppy.set("theme", theme);
-      $(".view").each(function() {
-        if (this.editor) this.editor.setOption("theme", theme);
+  $("select.theme")
+    .off("change")
+    .on("change", function () {
+      const theme = this.value;
+      loadTheme(theme, () => {
+        droppy.set("theme", theme);
+        $(".view").each(function () {
+          if (this.editor) this.editor.setOption("theme", theme);
+        });
       });
     });
-  });
 
-  $("select.editorFontSize").off("change").on("change", function() {
-    setEditorFontSize(this.value);
-  });
+  $("select.editorFontSize")
+    .off("change")
+    .on("change", function () {
+      setEditorFontSize(this.value);
+    });
 
-  $("select.interfaceTheme").off("change").on("change", function() {
-    const interfaceTheme = this.value;
-    droppy.set("interfaceTheme", interfaceTheme);
-    $("body").attr("theme", interfaceTheme);
-  });
+  $("select.interfaceTheme")
+    .off("change")
+    .on("change", function () {
+      const interfaceTheme = this.value;
+      droppy.set("interfaceTheme", interfaceTheme);
+      $("body").attr("theme", interfaceTheme);
+    });
 
   setTimeout(() => {
-    box.addClass("in").transitionend(function() {
+    box.addClass("in").transitionend(function () {
       this.removeAttribute("style");
     });
     toggleCatcher(true);
     $("#overlay").one("click", () => {
-      box.find("select").each(function() {
+      box.find("select").each(function () {
         const option = this.className;
         let value = this.value;
 
@@ -2315,10 +2647,11 @@ function showPrefs() {
         droppy.set(option, value);
         if (option === "indentUnit") droppy.set("tabSize", value);
 
-        $(".view").each(function() {
+        $(".view").each(function () {
           if (this.editor) {
             this.editor.setOption(option, value);
-            if (option === "indentUnit") this.editor.setOption("tabSize", value);
+            if (option === "indentUnit")
+              this.editor.setOption("tabSize", value);
           }
         });
       });
@@ -2351,14 +2684,14 @@ function showConfirmation(message, callback) {
       document.createElement("br"),
       document.createElement("br"),
       confirm,
-      decline,
+      decline
     );
 
     return content;
   });
 
   setTimeout(() => {
-    box.addClass("in").transitionend(function() {
+    box.addClass("in").transitionend(function () {
       this.removeAttribute("style");
     });
     toggleCatcher(true);
@@ -2407,23 +2740,31 @@ function play(view, index) {
 
   if (row.length) {
     const content = row.parents(".content-container");
-    if (row[0].offsetTop < content[0].scrollTop ||
-            row[0].offsetTop > content[0].scrollTop + content[0].clientHeight) {
+    if (
+      row[0].offsetTop < content[0].scrollTop ||
+      row[0].offsetTop > content[0].scrollTop + content[0].clientHeight
+    ) {
       row[0].scrollIntoView();
     }
 
     let i = 0;
-    row.parent().children(".playable").each(function() {
-      this.dataset.playindex = i++;
-    });
+    row
+      .parent()
+      .children(".playable")
+      .each(function () {
+        this.dataset.playindex = i++;
+      });
     view[0].playlistLength = i;
   }
-  view[0].playlistIndex = typeof index === "number" ? index : Number(row[0].dataset.playindex);
+  view[0].playlistIndex =
+    typeof index === "number" ? index : Number(row[0].dataset.playindex);
 }
 
 function onNewAudio(view) {
   const player = view[0].querySelector(".audio-player");
-  const title = decodeURIComponent(removeExt(basename(player.src).replace(/_/g, " ").replace(/\s+/, " ")));
+  const title = decodeURIComponent(
+    removeExt(basename(player.src).replace(/_/g, " ").replace(/\s+/, " "))
+  );
 
   view.find(".audio-bar").addClass("in");
   view.find(".audio-title")[0].textContent = title;
@@ -2438,14 +2779,18 @@ function onNewAudio(view) {
     if (!progress || progress < 100) setTimeout(updateBuffer, 100);
   })();
 
-  $(player).off("timeupdate").on("timeupdate", () => {
-    const cur = player.currentTime,
-      max = player.duration;
-    if (!cur || !max) return;
-    view[0].querySelector(".seekbar-played").style.width = `${(cur / max) * 100}%`;
-    view[0].querySelector(".time-cur").textContent = secsToTime(cur);
-    view[0].querySelector(".time-max").textContent = secsToTime(max);
-  });
+  $(player)
+    .off("timeupdate")
+    .on("timeupdate", () => {
+      const cur = player.currentTime,
+        max = player.duration;
+      if (!cur || !max) return;
+      view[0].querySelector(".seekbar-played").style.width = `${
+        (cur / max) * 100
+      }%`;
+      view[0].querySelector(".time-cur").textContent = secsToTime(cur);
+      view[0].querySelector(".time-max").textContent = secsToTime(max);
+    });
 }
 
 function endAudio(view) {
@@ -2501,7 +2846,7 @@ function initAudio(view) {
   player.addEventListener("playing", (e) => {
     onNewAudio($(e.target).parents(".view"));
   });
-  const updateVolume = throttle(event => {
+  const updateVolume = throttle((event) => {
     const slider = $(event.target).parents(".view").find(".volume-slider")[0];
     const left = slider.getBoundingClientRect().left;
     const right = slider.getBoundingClientRect().right;
@@ -2522,45 +2867,62 @@ function initAudio(view) {
     updateVolume(event);
     event.stopPropagation();
   });
-  bar.off("click").on("click", function(event) {
-    const time = player.duration *
-            ((event.pageX - bar[0].getBoundingClientRect().left) / bar[0].clientWidth);
+  bar.off("click").on("click", function (event) {
+    const time =
+      player.duration *
+      ((event.pageX - bar[0].getBoundingClientRect().left) /
+        bar[0].clientWidth);
     if (!Number.isNaN(parseFloat(time)) && Number.isFinite(time)) {
       player.currentTime = time;
     } else {
       endAudio($(this).parents(".view"));
     }
   });
-  bar.find(".previous").off("click").on("click", (event) => {
-    playPrev($(event.target).parents(".view"));
-    event.stopPropagation();
-  });
-  bar.find(".next").off("click").on("click", (event) => {
-    playNext($(event.target).parents(".view"));
-    event.stopPropagation();
-  });
-  bar.find(".pause-play").off("click").on("click", function(event) {
-    const icon = $(this).children("svg");
-    const player = $(this).parents(".audio-bar").find(".audio-player")[0];
-    if (icon[0].getAttribute("class") === "play") {
-      icon.replaceWith($(svg("pause")));
-      player.play();
-    } else {
-      icon.replaceWith($(svg("play")));
-      player.pause();
-    }
-    event.stopPropagation();
-  });
+  bar
+    .find(".previous")
+    .off("click")
+    .on("click", (event) => {
+      playPrev($(event.target).parents(".view"));
+      event.stopPropagation();
+    });
+  bar
+    .find(".next")
+    .off("click")
+    .on("click", (event) => {
+      playNext($(event.target).parents(".view"));
+      event.stopPropagation();
+    });
+  bar
+    .find(".pause-play")
+    .off("click")
+    .on("click", function (event) {
+      const icon = $(this).children("svg");
+      const player = $(this).parents(".audio-bar").find(".audio-player")[0];
+      if (icon[0].getAttribute("class") === "play") {
+        icon.replaceWith($(svg("pause")));
+        player.play();
+      } else {
+        icon.replaceWith($(svg("play")));
+        player.pause();
+      }
+      event.stopPropagation();
+    });
 
-  bar.find(".stop").off("click").on("click", function(event) {
-    endAudio($(this).parents(".view"));
-    event.stopPropagation();
-  });
-  bar.find(".shuffle").off("click").on("click", function(event) {
-    $(this).toggleClass("active");
-    $(this).parents(".view")[0].shuffle = $(this).hasClass("active");
-    event.stopPropagation();
-  });
+  bar
+    .find(".stop")
+    .off("click")
+    .on("click", function (event) {
+      endAudio($(this).parents(".view"));
+      event.stopPropagation();
+    });
+  bar
+    .find(".shuffle")
+    .off("click")
+    .on("click", function (event) {
+      $(this).toggleClass("active");
+      $(this).parents(".view")[0].shuffle = $(this).hasClass("active");
+      event.stopPropagation();
+    });
 
   function setVolume(volume) {
     if (volume > 1) volume = 1;
@@ -2572,7 +2934,9 @@ function initAudio(view) {
     else if (player.volume <= 0.33) volumeIcon.html(svg("volume-low"));
     else if (player.volume <= 0.67) volumeIcon.html(svg("volume-medium"));
     else volumeIcon.html(svg("volume-high"));
-    document.querySelector(".volume-slider-inner").style.width = `${volume * 100}%`;
+    document.querySelector(".volume-slider-inner").style.width = `${
+      volume * 100
+    }%`;
   }
 
   function onWheel(event) {
@@ -2596,7 +2960,9 @@ function initAudio(view) {
 
 function splitCallback(cont, n) {
   let countDown = n;
-  return function() { if (--countDown === 0) cont(); };
+  return function () {
+    if (--countDown === 0) cont();
+  };
 }
 
 // CodeMirror dynamic mode loading
@@ -2620,7 +2986,7 @@ function initModeLoad() {
     }
   }
 
-  CodeMirror.requireMode = function(mode, cont) {
+  CodeMirror.requireMode = function (mode, cont) {
     if (typeof mode !== "string") mode = mode.name;
     if (mode in CodeMirror.modes) return ensureDeps(mode, cont);
     if (mode in loading) return loading[mode].push(cont);
@@ -2629,7 +2995,7 @@ function initModeLoad() {
     script.src = `!/res/mode/${mode}`;
     const others = document.getElementsByTagName("script")[0];
     others.parentNode.insertBefore(script, others);
-    const list = loading[mode] = [cont];
+    const list = (loading[mode] = [cont]);
     let count = 0;
     const poll = setInterval(() => {
       if (++count > 100) return clearInterval(poll);
@@ -2643,7 +3009,7 @@ function initModeLoad() {
     }, 200);
   };
 
-  CodeMirror.autoLoadMode = function(instance, mode) {
+  CodeMirror.autoLoadMode = function (instance, mode) {
     if (!(mode in CodeMirror.modes)) {
       CodeMirror.requireMode(mode, () => {
         instance.setOption("mode", instance.getOption("mode"));
@@ -2653,15 +3019,20 @@ function initModeLoad() {
 }
 
 function modeFromShebang(text) {
-    // extract first line, trim and remove flags
-  text = (text || "").split(/\n/)[0].trim().split(" ").filter((e) => {
-    return !/^-+/.test(e);
-  }).join(" ");
+  // extract first line, trim and remove flags
+  text = (text || "")
+    .split(/\n/)[0]
+    .trim()
+    .split(" ")
+    .filter((e) => {
+      return !/^-+/.test(e);
+    })
+    .join(" ");
 
-    // shell scripts
+  // shell scripts
   if (/^#!.*\b(ba|c|da|k|fi|tc|z)?sh$/.test(text)) return "shell";
 
-    // map binary name to CodeMirror mode
+  // map binary name to CodeMirror mode
   let mode;
   const exes = {
     dart: "dart",
@@ -2672,7 +3043,7 @@ function modeFromShebang(text) {
     python: "python",
     ruby: "ruby",
     swift: "swift",
-    tclsh: "tcl"
+    tclsh: "tcl",
   };
   Object.keys(exes).some((exe) => {
     if (new RegExp(`^#!.*\\b${exe}$`).test(text)) return (mode = exes[exe]);
@@ -2692,33 +3063,42 @@ function initVideo(el) {
         return setTimeout(verify, 200);
       }
 
-            // pause other loaded videos in this view
-      view.find("video").each(function() {
+      // pause other loaded videos in this view
+      view.find("video").each(function () {
         if (this !== el) this.pause();
       });
 
       const player = new Plyr(el, {
-        controls: ["play", "volume", "progress", "current-time", "mute", "captions"],
+        controls: [
+          "play",
+          "volume",
+          "progress",
+          "current-time",
+          "mute",
+          "captions",
+        ],
         iconUrl: "!/res/lib/plyr.svg",
         blankVideo: "!/res/lib/blank.mp4",
         autoplay: !droppy.detects.mobile,
         volume: droppy.get("volume"),
         muted: droppy.get("volume") === 0,
-        keyboardShortcuts: {focused: true, global: true},
-        tooltips: {controls: false, seek: true},
+        keyboardShortcuts: { focused: true, global: true },
+        tooltips: { controls: false, seek: true },
         disableContextMenu: false,
-        storage: {enabled: false},
-        fullscreen: {enable: false},
+        storage: { enabled: false },
+        fullscreen: { enable: false },
         hideControls: true,
       });
 
       player.on("ready", () => {
-                // stop drags from propagating outside the control bar
-        $(view).find(".plyr__controls").on("mousemove", (e) => {
-          if (e.originalEvent && e.originalEvent.buttons !== 0) {
-            e.stopPropagation();
-          }
-        });
+        // stop drags from propagating outside the control bar
+        $(view)
+          .find(".plyr__controls")
+          .on("mousemove", (e) => {
+            if (e.originalEvent && e.originalEvent.buttons !== 0) {
+              e.stopPropagation();
+            }
+          });
       });
 
       player.on("ended", () => {
@@ -2759,10 +3139,34 @@ function initVariables() {
 
   droppy.dir = ["directory", "webkitdirectory", "allowdirs"];
 
-    // Extension to icon mappings
+  // Extension to icon mappings
   droppy.iconMap = {
     archive: ["bz2", "tgz"],
-    audio: ["aac", "aif", "aiff", "f4a", "flac", "m4a", "m4b", "m4p", "m4p", "m4r", "mka", "mid", "mp1", "mp2", "mp3", "mpa", "mpeg", "ra", "ogg", "oga", "opus", "wav", "wma"],
+    audio: [
+      "aac",
+      "aif",
+      "aiff",
+      "f4a",
+      "flac",
+      "m4a",
+      "m4b",
+      "m4p",
+      "m4p",
+      "m4r",
+      "mka",
+      "mid",
+      "mp1",
+      "mp2",
+      "mp3",
+      "mpa",
+      "mpeg",
+      "ra",
+      "ogg",
+      "oga",
+      "opus",
+      "wav",
+      "wma",
+    ],
     authors: ["authors"],
     bin: ["class", "o", "so", "pyc", "node"],
     bmp: ["bmp", "xbm"],
@@ -2808,16 +3212,66 @@ function initVariables() {
     rss: ["rss"],
     rtf: ["rtf"],
     script: ["sh", "csh", "ksh", "bash", "zsh", "fish", "shar", "configure"],
-    source: ["ini", "properties", "conf", "cfg", "config", "lisp", "ovpn", "lua", "yaml", "yml", "toml", "pl", "tcl", "r"],
+    source: [
+      "ini",
+      "properties",
+      "conf",
+      "cfg",
+      "config",
+      "lisp",
+      "ovpn",
+      "lua",
+      "yaml",
+      "yml",
+      "toml",
+      "pl",
+      "tcl",
+      "r",
+    ],
     sql: ["sql", "dump"],
     tar: ["tar"],
     tex: ["tex"],
     text: ["text", "txt"],
     tiff: ["tiff", "tif"],
     vcal: ["vcal"],
-    video: ["avi", "flv", "mkv", "mov", "mp4", "mpg", "3g2", "3gp", "f4v", "flv", "m4v", "m4v", "mk3d", "ogv", "ogx", "rm", "swf", "vob", "wmv", "webm", "h264"],
+    video: [
+      "avi",
+      "flv",
+      "mkv",
+      "mov",
+      "mp4",
+      "mpg",
+      "3g2",
+      "3gp",
+      "f4v",
+      "flv",
+      "m4v",
+      "m4v",
+      "mk3d",
+      "ogv",
+      "ogx",
+      "rm",
+      "swf",
+      "vob",
+      "wmv",
+      "webm",
+      "h264",
+    ],
     xml: ["xml", "wsdl"],
-    zip: ["7z", "bz2", "lzma", "war", "z", "zip", "xz", "xip", "dms", "apk", "xpi", "cab"]
+    zip: [
+      "7z",
+      "bz2",
+      "lzma",
+      "war",
+      "z",
+      "zip",
+      "xz",
+      "xip",
+      "dms",
+      "apk",
+      "xpi",
+      "cab",
+    ],
   };
 
   droppy.audioTypes = {
@@ -2860,7 +3314,7 @@ function initVariables() {
     webm: "video/webm", // can be audio/webm too
   };
 
-    /* order is significant for mime -> ext conversion */
+  /* order is significant for mime -> ext conversion */
   droppy.imageTypes = {
     png: "image/png",
     apng: "image/png",
@@ -2878,7 +3332,7 @@ function requestLink(view, location, attachement) {
   showSpinner(view);
   sendMessage(view[0].vId, "REQUEST_SHARELINK", {
     location,
-    attachement
+    attachement,
   });
 }
 
@@ -2894,7 +3348,7 @@ function timeDifference(prev) {
     [86400, 3600, "hour"],
     [2592000, 86400, "day"],
     [31536000, 2592000, "month"],
-    [Infinity, 31536000, "year"]
+    [Infinity, 31536000, "year"],
   ].some((data) => {
     if (diff < data[0]) {
       value = diff / data[1];
@@ -2904,22 +3358,26 @@ function timeDifference(prev) {
   });
   value = Math.round(value);
   if (diff <= 3) return "just now"; // acount for 3s clock skew
-  unit += (value > 1 ? "s" : "");
-  return [future ? "in" : "", value, unit, !future ? "ago" : ""].join(" ").trim();
+  unit += value > 1 ? "s" : "";
+  return [future ? "in" : "", value, unit, !future ? "ago" : ""]
+    .join(" ")
+    .trim();
 }
 
 function secsToTime(secs) {
-  let mins, hrs, time = "";
+  let mins,
+    hrs,
+    time = "";
   secs = parseInt(secs);
   hrs = Math.floor(secs / 3600);
-  mins = Math.floor((secs - (hrs * 3600)) / 60);
-  secs = secs - (hrs * 3600) - (mins * 60);
+  mins = Math.floor((secs - hrs * 3600) / 60);
+  secs = secs - hrs * 3600 - mins * 60;
 
   if (hrs < 10) hrs = `0${hrs}`;
   if (mins < 10) mins = `0${mins}`;
   if (secs < 10) secs = `0${secs}`;
 
-  if (hrs !== "00") time = (`${hrs}:`);
+  if (hrs !== "00") time = `${hrs}:`;
   return `${time + mins}:${secs}`;
 }
 
@@ -2937,30 +3395,37 @@ setInterval(() => {
 
 function loadScript(id, url) {
   if (document.getElementById(id)) return Promise.resolve();
-  return ajax(url).then((res) => {
-    return res.text();
-  }).then((text) => {
-    const script = document.createElement("script");
-    script.setAttribute("id", id);
-    script.textContent = text;
-    document.querySelector("head").appendChild(script);
-  });
+  return ajax(url)
+    .then((res) => {
+      return res.text();
+    })
+    .then((text) => {
+      const script = document.createElement("script");
+      script.setAttribute("id", id);
+      script.textContent = text;
+      document.querySelector("head").appendChild(script);
+    });
 }
 
 function loadStyle(id, url) {
   if (document.getElementById(id)) return Promise.resolve();
-  return ajax(url).then((res) => {
-    return res.text();
-  }).then((text) => {
-    const style = document.createElement("style");
-    style.setAttribute("id", id);
-    style.textContent = text;
-    document.querySelector("head").appendChild(style);
-  });
+  return ajax(url)
+    .then((res) => {
+      return res.text();
+    })
+    .then((text) => {
+      const style = document.createElement("style");
+      style.setAttribute("id", id);
+      style.textContent = text;
+      document.querySelector("head").appendChild(style);
+    });
 }
 
 function loadTheme(theme) {
-  return loadStyle(`theme-${theme.replace(/[^a-z0-9-]/gim, "")}`, `!/res/theme/${theme}`);
+  return loadStyle(
+    `theme-${theme.replace(/[^a-z0-9-]/gim, "")}`,
+    `!/res/theme/${theme}`
+  );
 }
 
 function setEditorFontSize(size) {
@@ -2984,7 +3449,7 @@ function showSpinner(view) {
 
   view.find(".spinner")[0].setAttribute("class", "spinner in");
 
-    // HACK: Safeguard so a view won't get stuck in loading state
+  // HACK: Safeguard so a view won't get stuck in loading state
   if (view[0].dataset.type === "directory") {
     if (view[0].stuckTimeout) clearTimeout(view[0].stuckTimeout);
     view[0].stuckTimeout = setTimeout(() => {
@@ -3020,7 +3485,7 @@ function showLink(view, link, attachement) {
   const dl = box.find(".dl-link");
   dl[attachement ? "addClass" : "removeClass"]("checked");
 
-  const select = function() {
+  const select = function () {
     const range = document.createRange(),
       selection = getSelection();
     range.selectNodeContents(out[0]);
@@ -3038,37 +3503,55 @@ function showLink(view, link, attachement) {
     select();
   });
 
-  copy.off("click").on("click", () => {
-    let done;
-    select();
-    try { done = document.execCommand("copy"); } catch {}
-    copy[0].setAttribute("aria-label", done === true ? "Copied!" : "Copy failed");
-  }).on("mouseleave", () => {
-    copy[0].setAttribute("aria-label", "Copy to clipboard");
-  });
+  copy
+    .off("click")
+    .on("click", () => {
+      let done;
+      select();
+      try {
+        done = document.execCommand("copy");
+      } catch {
+        // Fail silently
+      }
+      copy[0].setAttribute(
+        "aria-label",
+        done === true ? "Copied!" : "Copy failed"
+      );
+    })
+    .on("mouseleave", () => {
+      copy[0].setAttribute("aria-label", "Copy to clipboard");
+    });
 
-  dl.off("click").on("click", function() {
+  dl.off("click").on("click", function () {
     $(this).toggleClass("checked");
-    requestLink($(this).parents(".view"), view[0].sharelinkId, $(this).hasClass("checked"));
+    requestLink(
+      $(this).parents(".view"),
+      view[0].sharelinkId,
+      $(this).hasClass("checked")
+    );
   });
 }
 
 function showNotification(msg, body) {
   if (droppy.detects.notification && document.hidden) {
-    const show = function(msg, body) {
-      const opts = {icon: "!/res/logo192.png"};
+    const show = function (msg, body) {
+      const opts = { icon: "!/res/logo192.png" };
       if (body) opts.body = body;
       const n = new Notification(msg, opts);
-      n.addEventListener("show", function() { // Compat: Chrome
+      n.addEventListener("show", function () {
+        // Compat: Chrome
         const self = this;
-        setTimeout(() => { self.close(); }, 4000);
+        setTimeout(() => {
+          self.close();
+        }, 4000);
       });
     };
     if (Notification.permission === "granted") {
       show(msg, body);
     } else if (Notification.permission !== "denied") {
       Notification.requestPermission((permission) => {
-        if (!("permission" in Notification)) Notification.permission = permission;
+        if (!("permission" in Notification))
+          Notification.permission = permission;
         if (permission === "granted") show(msg, body);
       });
     }
@@ -3077,7 +3560,7 @@ function showNotification(msg, body) {
 
 function debounce(func, wait, immediate) {
   let timeout;
-  return function(...args) {
+  return function (...args) {
     const later = () => {
       timeout = null;
       if (!immediate) func(...args);
@@ -3092,7 +3575,7 @@ function debounce(func, wait, immediate) {
 function throttle(func, threshold) {
   if (!threshold) threshold = 250;
   let last, deferTimer;
-  return function(...args) {
+  return function (...args) {
     const cur = performance.now();
     if (last && cur < last + threshold) {
       clearTimeout(deferTimer);
@@ -3113,7 +3596,7 @@ function getFullLink(hash) {
 
 function getSpriteClass(ext) {
   let type = "bin";
-  Object.keys(droppy.iconMap).forEach(fileType => {
+  Object.keys(droppy.iconMap).forEach((fileType) => {
     if (droppy.iconMap[fileType].includes(ext.toLowerCase())) {
       type = fileType;
     }
@@ -3125,7 +3608,7 @@ function formatBytes(num) {
   if (num < 1000) return `${num} B`;
   const units = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
   const exp = Math.min(Math.floor(Math.log10(num) / 3), units.length - 1);
-  return `${String((Number((num / (1000 ** exp)).toPrecision(3))))} ${units[exp]}`;
+  return `${String(Number((num / 1000 ** exp).toPrecision(3)))} ${units[exp]}`;
 }
 
 function strcmp(a, b) {
@@ -3138,21 +3621,25 @@ function naturalSortWithNumbers(a, b) {
   } else if (typeof a === "string" && typeof b === "string") {
     a = a.replace(/['"]/g, "_").toLowerCase();
     b = b.replace(/['"]/g, "_").toLowerCase();
-        // natural sort algorithm start
+    // natural sort algorithm start
     const x = [],
       y = [];
-    a.replace(/(\d+)|(\D+)/g, (_, a, b) => { x.push([a || 0, b]); });
-    b.replace(/(\d+)|(\D+)/g, (_, a, b) => { y.push([a || 0, b]); });
+    a.replace(/(\d+)|(\D+)/g, (_, a, b) => {
+      x.push([a || 0, b]);
+    });
+    b.replace(/(\d+)|(\D+)/g, (_, a, b) => {
+      y.push([a || 0, b]);
+    });
     while (x.length && y.length) {
       const xx = x.shift();
       const yy = y.shift();
-      const nn = (xx[0] - yy[0]) || strcmp(xx[1], yy[1]);
+      const nn = xx[0] - yy[0] || strcmp(xx[1], yy[1]);
       if (nn) return nn;
     }
     if (x.length) return -1;
     if (y.length) return 1;
     return 0;
-        // natural sort algorithm end
+    // natural sort algorithm end
   } else return 0;
 }
 
@@ -3165,7 +3652,7 @@ function sortArrayByProp(arr, prop) {
 }
 
 function ajax(opts) {
-  if (typeof opts === "string") opts = {url: opts};
+  if (typeof opts === "string") opts = { url: opts };
 
   const headers = new Headers(opts.headers || {});
   if (opts.data) {
@@ -3179,7 +3666,8 @@ function ajax(opts) {
     credentials: "same-origin",
     mode: "same-origin",
     redirect: "error",
-  }).catch((err) => { // request failed
+  }).catch((err) => {
+    // request failed
     showError(getActiveView(), err.message);
   });
 }
@@ -3204,9 +3692,18 @@ function validPath(path) {
 
 function validFilename(name) {
   if (!name || name.length > 255) return false;
-  if (/[<>:"|?*\x00-\x1F]/.test(name)) return false;
-  if (/^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i.test(name)) return false;
-  if (/^\.\.?$/.test(name)) return false;
+
+  // eslint-disable-next-line no-control-regex
+  if (/[<>:"|?*\x00-\x1F]/.test(name)) {
+    return false;
+  }
+
+  if (/^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i.test(name)) {
+    return false;
+  }
+  if (/^\.\.?$/.test(name)) {
+    return false;
+  }
   return true;
 }
 
@@ -3233,14 +3730,22 @@ function dirname(path) {
 // detect dominant line ending style (CRLF vs LF)
 function dominantLineEnding(str) {
   const numCRLF = (str.match(/\r\n/gm) || []).length;
-    // emulating negative lookbehind by reversing the string
-  const numLF = (str.split("").reverse().join("").match(/\n(?!(\r))/gm) || []).length;
-  return (numCRLF > numLF) ? "\r\n" : "\n";
+  // emulating negative lookbehind by reversing the string
+  const numLF = (
+    str
+      .split("")
+      .reverse()
+      .join("")
+      .match(/\n(?!(\r))/gm) || []
+  ).length;
+  return numCRLF > numLF ? "\r\n" : "\n";
 }
 
 // Join and clean up paths (can also take a single argument to just clean it up)
 function join(...args) {
-  let i, l, parts = [];
+  let i,
+    l,
+    parts = [];
   const newParts = [];
   for (i = 0, l = args.length; i < l; i++) {
     if (typeof args[i] === "string") {
@@ -3272,7 +3777,9 @@ function dateFilename() {
   const mins = now.getMinutes();
   const secs = now.getSeconds();
 
-  return `${year}-${pad(month)}-${pad(day)}-${pad(hrs)}-${pad(mins)}-${pad(secs)}`;
+  return `${year}-${pad(month)}-${pad(day)}-${pad(hrs)}-${pad(mins)}-${pad(
+    secs
+  )}`;
 }
 
 function arr(arrLike) {
@@ -3293,7 +3800,7 @@ function urlToPngBlob(url, cb) {
     const len = binary.length;
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-    cb(new Blob([bytes.buffer], {type: "image/png"}));
+    cb(new Blob([bytes.buffer], { type: "image/png" }));
   });
   img.src = url;
 }

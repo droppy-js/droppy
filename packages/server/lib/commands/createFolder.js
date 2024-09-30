@@ -1,7 +1,7 @@
-const filetree = require("../services/filetree");
+import filetree from "../services/filetree.js";
 
-exports.default = {
-  handler: async ({validatePaths, sid, config, msg, ws, vId, sendError}) => {
+export default {
+  handler: async ({ validatePaths, sid, config, msg, ws, vId, sendError }) => {
     if (config.readOnly) {
       return sendError(sid, vId, "Files are read-only");
     }
@@ -9,8 +9,8 @@ exports.default = {
       return;
     }
 
-    filetree.mkdir(msg.data, err => {
+    filetree.mkdir(msg.data, (err) => {
       if (err) sendError(sid, vId, `Error creating folder: ${err.message}`);
     });
-  }
+  },
 };

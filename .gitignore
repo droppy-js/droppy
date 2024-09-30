@@ -1,4 +1,5 @@
-/.vscode/
+.vscode/*
+!.vscode/extensions.json
 dist/
 node_modules
 npm-debug.log*

@@ -1,52 +1,70 @@
 "use strict";
 
-const paths = module.exports = {};
-const fs = require("fs");
-const path = require("path");
-const untildify = require("untildify");
-
-const os = require("os");
+import { realpathSync } from "fs";
+import path from "path";
+import untildify from "untildify";
+import { fileURLToPath } from "url";
+import { createRequire } from "module";
+import os from "os";
 
 const homedir = os.homedir();
 
 let configDir = resolve(homedir, "/.droppy/config");
 let filesDir = resolve(homedir, "/.droppy/files");
 
-const clientPath = path.normalize(`${path.dirname(require.resolve("@droppyjs/client"))}/../`);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-paths.get = function() {
-  return {
-    homedir,
+const require = createRequire(import.meta.url);
 
-    files: resolve(filesDir),
-    config: resolve(configDir),
+const clientPath = path.normalize(
+  `${path.dirname(require.resolve("@droppyjs/client"))}/../`
+);
 
-    pid: resolve(configDir, "droppy.pid"),
-    temp: resolve(configDir, "temp"),
-    cfgFile: resolve(configDir, "config.json"),
-    db: resolve(configDir, "db.json"),
-    tlsKey: resolve(configDir, "tls.key"),
-    tlsCert: resolve(configDir, "tls.cert"),
-    tlsCA: resolve(configDir, "tls.ca"),
+class DroppyPaths {
+  get() {
+    return {
+      homedir,
 
-    mod: resolve(__dirname, ".."),
-    server: resolve(__dirname, "..", "server"),
-    client: clientPath,
-    templates: resolve(clientPath, "lib", "templates"),
-    svg: resolve(clientPath, "lib", "svg")
-  };
-};
+      files: resolve(filesDir),
+      config: resolve(configDir),
 
-paths.seed = function(config, files) {
-  if (config) configDir = config;
-  if (files) filesDir = files;
-};
+      pid: resolve(configDir, "droppy.pid"),
+      temp: resolve(configDir, "temp"),
+      cfgFile: resolve(configDir, "config.json"),
+      db: resolve(configDir, "db.json"),
+      tlsKey: resolve(configDir, "tls.key"),
+      tlsCert: resolve(configDir, "tls.cert"),
+      tlsCA: resolve(configDir, "tls.ca"),
+
+      mod: resolve(__dirname, ".."),
+      server: resolve(__dirname, "..", "server"),
+      client: clientPath,
+      templates: resolve(clientPath, "lib", "templates"),
+      svg: resolve(clientPath, "lib", "svg"),
+    };
+  }
+
+  seed(config, files) {
+    if (config) {
+      configDir = config;
+    }
+
+    if (files) {
+      filesDir = files;
+    }
+  }
+}
 
 function resolve(...args) {
-  let p = path.join.apply(null, args);
-  p = path.resolve(p.startsWith("~") ? untildify(p) : p);
+  let p = path.join(...args); // Join the arguments into a path
+  p = path.resolve(p.startsWith("~") ? untildify(p) : p); // Resolve "~" paths with untildify
   try {
-    p = fs.realpathSync(p);
-  } catch {}
-  return p;
+    p = realpathSync(p); // Use the synchronous version of realpath
+  } catch {
+    // Fail silently
+  }
+  return p; // Return the resolved path
 }
+
+export default new DroppyPaths();

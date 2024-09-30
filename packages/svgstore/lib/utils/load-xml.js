@@ -9,7 +9,7 @@ const cheerio = require("cheerio");
 
 function loadXml(text) {
   return cheerio.load(text, {
-    xmlMode: true
+    xmlMode: true,
   });
 }
 

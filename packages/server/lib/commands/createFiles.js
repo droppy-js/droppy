@@ -1,11 +1,11 @@
-const path = require("path");
+import path from "path";
 
-const filetree = require("../services/filetree");
-const utils = require("../services/utils");
-const log = require("../services/log");
+import filetree from "../services/filetree.js";
+import utils from "../services/utils.js";
+import log from "../services/log.js";
 
-exports.default = {
-  handler: async ({validatePaths, sid, config, msg, ws, vId, sendError}) => {
+export default {
+  handler: async ({ validatePaths, sid, config, msg, ws, vId, sendError }) => {
     if (config.readOnly) {
       return sendError(sid, vId, "Files are read-only");
     }
@@ -13,16 +13,18 @@ exports.default = {
       return;
     }
 
-    await Promise.all(msg.data.files.map(file => {
-      return new Promise(resolve => {
-        filetree.mkdir(utils.addFilesPath(path.dirname(file)), (err) => {
-          if (err) log.error(ws, null, err);
-          filetree.mk(utils.addFilesPath(file), (err) => {
+    await Promise.all(
+      msg.data.files.map((file) => {
+        return new Promise((resolve) => {
+          filetree.mkdir(utils.addFilesPath(path.dirname(file)), (err) => {
             if (err) log.error(ws, null, err);
-            resolve();
+            filetree.mk(utils.addFilesPath(file), (err) => {
+              if (err) log.error(ws, null, err);
+              resolve();
+            });
           });
         });
-      });
-    }));
-  }
+      })
+    );
+  },
 };
