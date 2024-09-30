@@ -6,6 +6,7 @@
     "homepage": "https://github.com/droppyjs/droppy#readme",
     "license": "MIT",
     "main": "lib/svgstore.js",
+    "type": "module",
     "scripts": {
         "test": "jest --coverage",
         "watch": "chokidar '{lib,test}/**/*.js' -d 1000 -c 'yarn test'"
@@ -32,10 +33,10 @@
         "cheerio": "1.0.0-rc.12"
     },
     "devDependencies": {
-        "@babel/preset-env": "^7.21.5",
-        "babel-jest": "^27.1.1",
+        "@babel/preset-env": "^7.25.4",
+        "babel-jest": "^29.7.0",
         "chokidar-cli": "^3.0.0",
-        "jest": "^27.1.1"
+        "jest": "^29.7.0"
     },
     "repository": {
         "type": "git",

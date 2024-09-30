@@ -16,7 +16,7 @@ const ATTRIBUTE_ID = "id";
  * @return {object} symbol The final cheerio-aware object created by cloning the SVG contents
  * @see <a href="https://github.com/cheeriojs/cheerio">The Cheerio Project</a>
  */
-function svgToSymbol(id, child, _options) {
+export default function svgToSymbol(id, child, _options) {
   if (_options === void 0) {
     _options = {};
   }
@@ -31,5 +31,3 @@ function svgToSymbol(id, child, _options) {
 
   return symbol;
 }
-
-module.exports = svgToSymbol;

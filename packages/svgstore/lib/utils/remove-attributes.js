@@ -5,7 +5,7 @@
 
 "use strict";
 
-function removeAttributes(el, attrs) {
+export default function removeAttributes(el, attrs) {
   let localAttrs = attrs;
 
   if (localAttrs === true) {
@@ -26,5 +26,3 @@ function removeAttributes(el, attrs) {
 
   return el;
 }
-
-module.exports = removeAttributes;

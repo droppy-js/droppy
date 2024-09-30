@@ -1,16 +1,17 @@
 "use strict";
 
-const copyAttributes = require("./utils/copy-attributes");
-const loadXml = require("./utils/load-xml");
-const removeAttributes = require("./utils/remove-attributes");
-const setAttributes = require("./utils/set-attributes");
-const svgToSymbol = require("./utils/svg-to-symbol");
+import copyAttributes from "./utils/copy-attributes.js";
+import loadXml from "./utils/load-xml.js";
+import removeAttributes from "./utils/remove-attributes.js";
+import setAttributes from "./utils/set-attributes.js";
+import svgToSymbol from "./utils/svg-to-symbol.js";
 
 const SELECTOR_SVG = "svg";
 const SELECTOR_DEFS = "defs";
 
 const TEMPLATE_SVG = "<svg><defs/></svg>";
-const TEMPLATE_DOCTYPE = '<?xml version="1.0" encoding="UTF-8"?>' +
+const TEMPLATE_DOCTYPE =
+  '<?xml version="1.0" encoding="UTF-8"?>' +
   '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ' +
   '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
 
@@ -21,10 +22,10 @@ const DEFAULT_OPTIONS = {
   svgAttrs: false,
   symbolAttrs: false,
   copyAttrs: false,
-  renameDefs: false
+  renameDefs: false,
 };
 
-function svgstore(options) {
+export default function svgstore(options) {
   const svgstoreOptions = Object.assign({}, DEFAULT_OPTIONS, options);
 
   // <svg>
@@ -119,8 +120,6 @@ function svgstore(options) {
       });
 
       return TEMPLATE_DOCTYPE + clone.xml();
-    }
+    },
   };
 }
-
-module.exports = svgstore;

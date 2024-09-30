@@ -5,7 +5,7 @@
 
 "use strict";
 
-function setAttributes(el, attrs) {
+export default function setAttributes(el, attrs) {
   if (!attrs || typeof attrs !== "object") {
     return el;
   }
@@ -24,5 +24,3 @@ function setAttributes(el, attrs) {
 
   return el;
 }
-
-module.exports = setAttributes;
