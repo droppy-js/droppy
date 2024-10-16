@@ -43,7 +43,7 @@ droppy maintains an in-memory representation of the `files` directory. If you're
 
 ### Local Installation :package:
 
-With [`Node.js`](https://nodejs.org) >= 18.20.4 installed, run:
+With [`Node.js`](https://nodejs.org) >= 20.17.0 installed, run:
 
 ```sh
 $ yarn global add @droppyjs/cli
