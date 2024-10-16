@@ -1,13 +1,13 @@
-const fs = require("fs");
-const path = require("path");
-const util = require("util");
+import fs from "fs";
+import path from "path";
+import util from "util";
+
+import log from "../services/log.js";
+import utils from "../services/utils.js";
 
 const stat = util.promisify(fs.stat);
 
-const log = require("../services/log.js");
-const utils = require("../services/utils.js");
-
-exports.default = {
+export default {
   handler: async ({
     sid,
     sendObj,
@@ -47,11 +47,11 @@ exports.default = {
       log.info(
         ws,
         null,
-        `Non-existing update request, sending client to / : ${msg.data}`,
+        `Non-existing update request, sending client to / : ${msg.data}`
       );
     }
 
-    setView(sid, vId, {file: clientFile, directory: clientDir});
+    setView(sid, vId, { file: clientFile, directory: clientDir });
 
     if (!clientFile) {
       updateClientLocation(clientDir, sid, vId);

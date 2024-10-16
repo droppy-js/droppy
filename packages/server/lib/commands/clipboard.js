@@ -1,12 +1,12 @@
-const fs = require("fs");
-const escRe = require("escape-string-regexp");
+import fs from "fs";
+import escRe from "escape-string-regexp";
 
-const filetree = require("../services/filetree");
-const log = require("../services/log");
-const utils = require("../services/utils");
+import filetree from "../services/filetree.js";
+import log from "../services/log.js";
+import utils from "../services/utils.js";
 
-exports.default = {
-  handler: async ({validatePaths, sid, config, msg, ws, vId, sendError}) => {
+export default {
+  handler: async ({ validatePaths, sid, config, msg, ws, vId, sendError }) => {
     const src = msg.data.src;
     const dst = msg.data.dst;
     const type = msg.data.type;
@@ -18,13 +18,17 @@ exports.default = {
     }
 
     fs.stat(utils.addFilesPath(msg.data.dst), async (err, stats) => {
-      if (!err && stats || msg.data.src === msg.data.dst) {
-        utils.getNewPath(utils.addFilesPath(msg.data.dst), newDst => {
-          filetree.clipboard(msg.data.src, utils.removeFilesPath(newDst), msg.data.type);
+      if ((!err && stats) || msg.data.src === msg.data.dst) {
+        utils.getNewPath(utils.addFilesPath(msg.data.dst), (newDst) => {
+          filetree.clipboard(
+            msg.data.src,
+            utils.removeFilesPath(newDst),
+            msg.data.type
+          );
         });
       } else {
         filetree.clipboard(msg.data.src, msg.data.dst, msg.data.type);
       }
     });
-  }
+  },
 };

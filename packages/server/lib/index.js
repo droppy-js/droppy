@@ -1,13 +1,14 @@
-exports.cfg = require("./services/cfg");
+export { default as paths } from "./services/paths.js";
+export { default as cfg } from "./services/cfg.js";
 
-exports.cookies = require("./services/cookies");
-exports.csrf = require("./services/csrf");
-exports.db = require("./services/db");
-exports.filetree = require("./services/filetree");
-exports.log = require("./services/log");
-exports.manifest = require("./services/manifest");
-exports.paths = require("./services/paths");
-exports.resources = require("./services/resources");
-exports.server = require("./services/server");
-exports.svg = require("./services/svg");
-exports.utils = require("./services/utils");
+export { default as utils } from "./services/utils.js";
+export { default as db } from "./services/db.js";
+
+export { default as cookies } from "./services/cookies.js";
+export { default as csrf } from "./services/csrf.js";
+export { default as filetree } from "./services/filetree.js";
+export { default as log } from "./services/log.js";
+export { default as manifest } from "./services/manifest.js";
+export { default as resources } from "./services/resources.js";
+export { default as server } from "./services/server.js";
+export { default as svg } from "./services/svg.js";

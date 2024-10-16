@@ -4,13 +4,9 @@
 
 "use strict";
 
-const ALWAYS_COPY_ATTRS = [
-  "viewBox",
-  "aria-labelledby",
-  "role",
-];
+const ALWAYS_COPY_ATTRS = ["viewBox", "aria-labelledby", "role"];
 
-function copyAttributes(a, b, attrs) {
+export default function copyAttributes(a, b, attrs) {
   const attrsToCopy = ALWAYS_COPY_ATTRS.concat(attrs || []);
   const copiedAttrs = Object.create(null);
 
@@ -30,5 +26,3 @@ function copyAttributes(a, b, attrs) {
 
   return a;
 }
-
-module.exports = copyAttributes;

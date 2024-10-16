@@ -1,7 +1,7 @@
-const filetree = require("../services/filetree");
+import filetree from "../services/filetree.js";
 
-exports.default = {
-  handler: async ({validatePaths, sendObj, sid, msg, ws, vId}) => {
+export default {
+  handler: async ({ validatePaths, sendObj, sid, msg, ws, vId }) => {
     const query = msg.data.query;
     const dir = msg.data.dir;
     if (!validatePaths(dir, msg.type, ws, sid, vId)) {
@@ -12,7 +12,7 @@ exports.default = {
       type: "SEARCH_RESULTS",
       vId,
       folder: dir,
-      results: filetree.search(query, dir)
+      results: filetree.search(query, dir),
     });
-  }
+  },
 };

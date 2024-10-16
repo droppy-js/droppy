@@ -1,21 +1,22 @@
 "use strict";
 
-const fs = require("fs");
-const {red, blue, yellow, green, cyan, magenta, reset} = require("colorette");
-const stripAnsi = require("strip-ansi");
-const {isIPv6} = require("net");
+import fs from "fs";
+import { red, blue, yellow, green, cyan, magenta, reset } from "colorette";
+import stripAnsi from "strip-ansi";
+import { isIPv6 } from "net";
 
-const utils = require("./utils.js");
+import utils from "./utils.js";
 
 const logColors = [reset, red, yellow, cyan];
 const logLabels = ["", "ERROR", "INFO", "DEBG"];
 let opts, logfile;
 
-const log = module.exports = function(req, res, logLevel, ...elems) {
+const log = function (req, res, logLevel, ...elems) {
   if (opts && opts.logLevel < logLevel) return;
   let statusCode;
 
-  if (req && req.time) elems.unshift(`[${magenta(`${Date.now() - req.time}ms`)}]`);
+  if (req && req.time)
+    elems.unshift(`[${magenta(`${Date.now() - req.time}ms`)}]`);
 
   if (res) {
     if (res.statusCode) {
@@ -68,15 +69,15 @@ const log = module.exports = function(req, res, logLevel, ...elems) {
   }
 };
 
-log.init = function(o) {
+log.init = function (o) {
   opts = o;
 };
 
-log.setLogFile = function(fd) {
+log.setLogFile = function (fd) {
   logfile = fd;
 };
 
-log.debug = function(...args) {
+log.debug = function (...args) {
   const [req, res, ...elems] = args;
   if (req && (req.headers || req.addr)) {
     log(req, res, 3, elems.join(""));
@@ -85,7 +86,7 @@ log.debug = function(...args) {
   }
 };
 
-log.info = function(...args) {
+log.info = function (...args) {
   const [req, res, ...elems] = args;
   if (req && (req.headers || req.addr)) {
     log(req, res, 2, elems.join(""));
@@ -94,21 +95,31 @@ log.info = function(...args) {
   }
 };
 
-log.error = function(...args) {
+log.error = function (...args) {
   const [req, res, ...elems] = args;
   if (req && (req.headers || req.addr)) {
-    log(req, res, 1, red(log.formatError(elems.length === 1 ? elems[0] : elems.join(" "))));
+    log(
+      req,
+      res,
+      1,
+      red(log.formatError(elems.length === 1 ? elems[0] : elems.join(" ")))
+    );
   } else {
-    log(null, null, 1, red(log.formatError(args.length === 1 ? args[0] : args.join(" "))));
+    log(
+      null,
+      null,
+      1,
+      red(log.formatError(args.length === 1 ? args[0] : args.join(" ")))
+    );
   }
 };
 
-log.plain = function(...args) {
+log.plain = function (...args) {
   if (opts && opts.logLevel < 2) return;
   log(null, null, 0, args.join(""));
 };
 
-log.timestamp = function() {
+log.timestamp = function () {
   const now = new Date();
   let day = now.getDate();
   let month = now.getMonth() + 1;
@@ -125,19 +136,26 @@ log.timestamp = function() {
   return `${year}-${month}-${day} ${hrs}:${mins}:${secs}`;
 };
 
-log.logo = function(line1, line2, line3) {
-  log.plain(blue([
-    "\n",
-    "           .:.\n",
-    `    :::  .:::::.   ${line1}\n`,
-    `  ..:::..  :::     ${line2}\n`,
-    `   ':::'   :::     ${line3}\n`,
-    "     '\n",
-  ].join("")));
+log.logo = function (line1, line2, line3) {
+  log.plain(
+    blue(
+      [
+        "\n",
+        "           .:.\n",
+        `    :::  .:::::.   ${line1}\n`,
+        `  ..:::..  :::     ${line2}\n`,
+        `   ':::'   :::     ${line3}\n`,
+        "     '\n",
+      ].join("")
+    )
+  );
 };
 
-log.formatHostPort = function(hostname, port, proto) {
-  if (proto === "http" && port === "80" || proto === "https" && port === "443") {
+log.formatHostPort = function (hostname, port, proto) {
+  if (
+    (proto === "http" && port === "80") ||
+    (proto === "https" && port === "443")
+  ) {
     port = "";
   } else {
     port = blue(`:${port}`);
@@ -146,17 +164,21 @@ log.formatHostPort = function(hostname, port, proto) {
   return cyan(isIPv6(hostname) ? `[${hostname}]` : hostname) + port;
 };
 
-log.formatError = function(err) {
+log.formatError = function (err) {
   let output;
   if (err instanceof Error) {
     output = err.stack;
   } else if (!err) {
-    output = `${new Error("Error handler called without an argument").stack}\nerr = ${err}`;
+    output = `${
+      new Error("Error handler called without an argument").stack
+    }\nerr = ${err}`;
   } else if (typeof err === "string") {
     output = err;
   } else {
-    output = `${err}\n${(new Error()).stack}`;
+    output = `${err}\n${new Error().stack}`;
   }
 
   return output.replace(/^Error: /, "");
 };
+
+export default log;

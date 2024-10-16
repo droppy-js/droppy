@@ -1,10 +1,10 @@
-const {magenta} = require("colorette");
+import { magenta } from "colorette";
 
-const log = require("../services/log");
-const db = require("../services/db");
+import log from "../services/log.js";
+import db from "../services/db.js";
 
-exports.default = {
-  handler: async ({priv, cookie, sid, msg, ws, sendUsers, sendError}) => {
+export default {
+  handler: async ({ priv, cookie, sid, msg, ws, sendUsers, sendError }) => {
     const name = msg.data.name;
     const pass = msg.data.pass;
     if (!priv) return;
@@ -22,8 +22,13 @@ exports.default = {
     } else {
       const isNew = !db.get("users")[name];
       db.addOrUpdateUser(name, pass, msg.data.priv || false);
-      log.info(ws, null, `${isNew ? "Added" : "Updated"} user: `, magenta(name));
+      log.info(
+        ws,
+        null,
+        `${isNew ? "Added" : "Updated"} user: `,
+        magenta(name)
+      );
     }
     sendUsers(sid);
-  }
+  },
 };

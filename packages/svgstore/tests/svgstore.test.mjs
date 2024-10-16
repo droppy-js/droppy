@@ -1,10 +1,12 @@
-const svgstore = require("../lib/svgstore");
+import svgstore from "../lib/svgstore";
 
-const doctype = '<?xml version="1.0" encoding="UTF-8"?>' +
+const doctype =
+  '<?xml version="1.0" encoding="UTF-8"?>' +
   '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ' +
   '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
 
-const svgNs = '<svg xmlns="http://www.w3.org/2000/svg" ' +
+const svgNs =
+  '<svg xmlns="http://www.w3.org/2000/svg" ' +
   'xmlns:xlink="http://www.w3.org/1999/xlink">';
 
 const FIXTURE_SVGS = {
@@ -13,10 +15,13 @@ const FIXTURE_SVGS = {
   baz: '<svg viewBox="0 0 200 200"><defs><linear-gradient style="fill: red;"/></defs><path style="fill: red;"/></svg>',
   qux: '<svg viewBox="0 0 200 200"><defs><radial-gradient style="stroke: red;" fill="blue"/></defs><rect style="stroke: red;" fill="blue"/></svg>',
   quux: '<svg viewBox="0 0 200 200" aria-labelledby="titleId" role="img"><title id="titleId">A boxy shape</title><rect/></svg>',
-  corge: '<svg viewBox="0 0 200 200" aria-labelledby="titleId" role="img" preserveAspectRatio="xMinYMax" take-me-too="foo" count-me-out="bar">' +
+  corge:
+    '<svg viewBox="0 0 200 200" aria-labelledby="titleId" role="img" preserveAspectRatio="xMinYMax" take-me-too="foo" count-me-out="bar">' +
     '<title id="titleId">A boxy shape</title><rect/></svg>',
-  defsWithId: '<svg><defs><linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="a"><stop stop-color="#FFF" offset="0%"/><stop stop-color="#F0F0F0" offset="100%"/></linearGradient><path id="b" d=""/></defs><path fill="url(#a)" fill-rule="nonzero" d=""/><use xlink:href="#b"></use><use fill-rule="nonzero" xlink:href="#b"></use><path fill="url(#a)" fill-rule="nonzero" d=""/></svg>',
-  roleNoValue: '<svg viewBox="0 0 200 200" aria-labelledby="titleId" role><title id="titleId">Another boxy shape</title><rect/></svg>',
+  defsWithId:
+    '<svg><defs><linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="a"><stop stop-color="#FFF" offset="0%"/><stop stop-color="#F0F0F0" offset="100%"/></linearGradient><path id="b" d=""/></defs><path fill="url(#a)" fill-rule="nonzero" d=""/><use xlink:href="#b"></use><use fill-rule="nonzero" xlink:href="#b"></use><path fill="url(#a)" fill-rule="nonzero" d=""/></svg>',
+  roleNoValue:
+    '<svg viewBox="0 0 200 200" aria-labelledby="titleId" role><title id="titleId">Another boxy shape</title><rect/></svg>',
 };
 
 test("should create an svg document", () => {
@@ -28,7 +33,7 @@ test("should create an svg document", () => {
 
 test("should create an svg element", () => {
   const store = svgstore();
-  const svg = store.toString({inline: true});
+  const svg = store.toString({ inline: true });
 
   expect(svg.slice(0, 4)).toBe("<svg");
 });
@@ -38,9 +43,8 @@ test("should combine svgs", () => {
     .add("foo", doctype + FIXTURE_SVGS.foo)
     .add("bar", doctype + FIXTURE_SVGS.bar);
 
-  const expected = `${doctype +
-    svgNs
-  }<defs>` +
+  const expected =
+    `${doctype + svgNs}<defs>` +
     `<linear-gradient style="fill: red;"/>` +
     `<radial-gradient style="stroke: red;"/>` +
     `</defs>` +
@@ -53,19 +57,18 @@ test("should combine svgs", () => {
 });
 
 test("should clean defs", () => {
-  const store = svgstore({cleanDefs: true})
+  const store = svgstore({ cleanDefs: true })
     .add("foo", doctype + FIXTURE_SVGS.foo)
     .add("bar", doctype + FIXTURE_SVGS.bar)
     .add("baz", doctype + FIXTURE_SVGS.baz, {
-      cleanDefs: []
+      cleanDefs: [],
     })
     .add("qux", doctype + FIXTURE_SVGS.qux, {
-      cleanDefs: ["fill"]
+      cleanDefs: ["fill"],
     });
 
-  const expected = `${doctype +
-    svgNs
-  }<defs>` +
+  const expected =
+    `${doctype + svgNs}<defs>` +
     `<linear-gradient/><radial-gradient/>` +
     `<linear-gradient style="fill: red;"/>` +
     `<radial-gradient style="stroke: red;"/>` +
@@ -81,19 +84,18 @@ test("should clean defs", () => {
 });
 
 test("should clean symbols", () => {
-  const store = svgstore({cleanSymbols: true})
+  const store = svgstore({ cleanSymbols: true })
     .add("foo", doctype + FIXTURE_SVGS.foo)
     .add("bar", doctype + FIXTURE_SVGS.bar)
     .add("baz", doctype + FIXTURE_SVGS.baz, {
-      cleanSymbols: []
+      cleanSymbols: [],
     })
     .add("qux", doctype + FIXTURE_SVGS.qux, {
-      cleanSymbols: ["fill"]
+      cleanSymbols: ["fill"],
     });
 
-  const expected = `${doctype +
-    svgNs
-  }<defs>` +
+  const expected =
+    `${doctype + svgNs}<defs>` +
     `<linear-gradient style="fill: red;"/>` +
     `<radial-gradient style="stroke: red;"/>` +
     `<linear-gradient style="fill: red;"/>` +
@@ -110,12 +112,10 @@ test("should clean symbols", () => {
 });
 
 test("should attempt to preserve the `viewBox`, `aria-labelledby`, and `role` attributes of the root SVG by default", () => {
-  const store = svgstore()
-    .add("quux", FIXTURE_SVGS.quux);
+  const store = svgstore().add("quux", FIXTURE_SVGS.quux);
 
-  const expected = `${doctype +
-    svgNs
-  }<defs/>` +
+  const expected =
+    `${doctype + svgNs}<defs/>` +
     `<symbol id="quux" viewBox="0 0 200 200" aria-labelledby="titleId" role="img">` +
     `<title id="titleId">A boxy shape</title><rect/>` +
     `</symbol>` +
@@ -126,12 +126,10 @@ test("should attempt to preserve the `viewBox`, `aria-labelledby`, and `role` at
 
 test("should support custom attribute preservation, on top of the defaults", () => {
   const copyAttrs = ["preserveAspectRatio", "take-me-too", "role"];
-  const store = svgstore({copyAttrs})
-    .add("corge", FIXTURE_SVGS.corge);
+  const store = svgstore({ copyAttrs }).add("corge", FIXTURE_SVGS.corge);
 
-  const expected = `${doctype +
-    svgNs
-  }<defs/>` +
+  const expected =
+    `${doctype + svgNs}<defs/>` +
     `<symbol id="corge" viewBox="0 0 200 200" aria-labelledby="titleId" role="img" preserveAspectRatio="xMinYMax" take-me-too="foo">` +
     `<title id="titleId">A boxy shape</title><rect/>` +
     `</symbol>` +
@@ -147,15 +145,16 @@ test("should set symbol attributes", () => {
       viewBox: null,
       id(id) {
         return `icon-${id}`;
-      }
-    }
+      },
+    },
   };
 
   const store = svgstore(options)
     .add("foo", doctype + FIXTURE_SVGS.foo)
     .add("bar", doctype + FIXTURE_SVGS.bar);
 
-  const expected = "<svg>" +
+  const expected =
+    "<svg>" +
     "<defs>" +
     '<linear-gradient style="fill: red;"/>' +
     '<radial-gradient style="stroke: red;"/>' +
@@ -172,15 +171,16 @@ test("should set svg attributes", () => {
     inline: true,
     svgAttrs: {
       id: "spritesheet",
-      style: "display: none"
-    }
+      style: "display: none",
+    },
   };
 
   const store = svgstore(options)
     .add("foo", doctype + FIXTURE_SVGS.foo)
     .add("bar", doctype + FIXTURE_SVGS.bar);
 
-  const expected = '<svg id="spritesheet" style="display: none">' +
+  const expected =
+    '<svg id="spritesheet" style="display: none">' +
     "<defs>" +
     '<linear-gradient style="fill: red;"/>' +
     '<radial-gradient style="stroke: red;"/>' +
@@ -195,13 +195,16 @@ test("should set svg attributes", () => {
 test("should rename defs id", () => {
   const options = {
     inline: true,
-    renameDefs: true
+    renameDefs: true,
   };
 
-  const store = svgstore(options)
-    .add("defs_with_id", doctype + FIXTURE_SVGS.defsWithId);
+  const store = svgstore(options).add(
+    "defs_with_id",
+    doctype + FIXTURE_SVGS.defsWithId
+  );
 
-  const expected = "<svg>" +
+  const expected =
+    "<svg>" +
     "<defs>" +
     '<linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="defs_with_id_a">' +
     '<stop stop-color="#FFF" offset="0%"/>' +
@@ -221,12 +224,10 @@ test("should rename defs id", () => {
 });
 
 test("should attempt to preserve the `viewBox`, `role`, and `aria-labelledby` attributes of the root SVG by default", () => {
-  const store = svgstore()
-    .add("roleNoValue", FIXTURE_SVGS.roleNoValue);
+  const store = svgstore().add("roleNoValue", FIXTURE_SVGS.roleNoValue);
 
-  const expected = `${doctype +
-    svgNs
-  }<defs/>` +
+  const expected =
+    `${doctype + svgNs}<defs/>` +
     `<symbol id="roleNoValue" viewBox="0 0 200 200" aria-labelledby="titleId" role="">` +
     `<title id="titleId">Another boxy shape</title><rect/>` +
     `</symbol>` +

@@ -1,5 +1,5 @@
-exports.default = {
-  handler: async ({sid, vId, setView}) => {
+export default {
+  handler: async ({ sid, vId, setView }) => {
     setView(sid, vId, null);
-  }
+  },
 };

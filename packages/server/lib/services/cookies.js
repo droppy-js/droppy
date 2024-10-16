@@ -1,89 +1,116 @@
 "use strict";
 
-const cookies = module.exports = {};
-const db = require("./db.js");
-const utils = require("./utils.js");
+import { db, utils } from "../index.js";
 
 // TODO: set secure flag on cookie. Requires X-Forwarded-Proto from the proxy
 const cookieParams = ["HttpOnly", "SameSite=strict"];
 
-cookies.parse = function(cookie) {
-  const entries = {};
-  if (typeof cookie === "string" && cookie.length) {
-    cookie.split("; ").forEach(entry => {
-      const parts = entry.trim().split("=");
-      entries[parts[0]] = parts[1];
-    });
+class DroppyCookies {
+  parse(cookie) {
+    const entries = {};
+    if (typeof cookie === "string" && cookie.length) {
+      cookie.split("; ").forEach((entry) => {
+        const parts = entry.trim().split("=");
+        entries[parts[0]] = parts[1];
+      });
+    }
+    return entries;
   }
-  return entries;
-};
 
-cookies.get = function(cookie) {
-  const entries = cookies.parse(cookie);
-  if (!entries || !entries.s) return false;
-  const sessions = Object.keys(db.get("sessions") || {});
-  if (!sessions.includes(entries.s)) return false;
-  return entries.s;
-};
+  get(cookie) {
+    const entries = this.parse(cookie);
+    if (!entries || !entries.s) {
+      return false;
+    }
 
-cookies.free = function(_req, res, _postData) {
-  const sessions = db.get("sessions");
-  const sid = utils.createSid();
+    const sessions = Object.keys(db.get("sessions") || {});
+    if (!sessions.includes(entries.s)) {
+      return false;
+    }
+
+    return entries.s;
+  }
+
+  free(_req, res, _postData) {
+    if (_postData) {
+      // TODO: update eslint to not complain about unused parameters starting with an underscore
+    }
+
+    const sessions = db.get("sessions");
+    const sid = utils.createSid();
     // TODO: obtain path
-  res.setHeader("Set-Cookie", cookieHeaders(sid, "/", inOneYear()));
-  sessions[sid] = {
-    privileged: true,
-    lastSeen: Date.now(),
-  };
-  db.set("sessions", sessions);
-};
+    res.setHeader("Set-Cookie", this.cookieHeaders(sid, "/", this.inOneYear()));
+    sessions[sid] = {
+      privileged: true,
+      lastSeen: Date.now(),
+    };
+    db.set("sessions", sessions);
+  }
 
-cookies.create = function(_req, res, postData) {
-  const sessions = db.get("sessions");
-  const sid = utils.createSid();
-  const expires = postData.remember ? inOneYear() : null;
-  res.setHeader("Set-Cookie", cookieHeaders(sid, postData.path, expires));
-  sessions[sid] = {
-    privileged: db.get("users")[postData.username].privileged,
-    username: postData.username,
-    lastSeen: Date.now(),
-  };
-  db.set("sessions", sessions);
-};
+  create(_req, res, postData) {
+    const sessions = db.get("sessions");
+    const sid = utils.createSid();
+    const expires = postData.remember ? this.inOneYear() : null;
+    res.setHeader(
+      "Set-Cookie",
+      this.cookieHeaders(sid, postData.path, expires)
+    );
+    sessions[sid] = {
+      privileged: db.get("users")[postData.username].privileged,
+      username: postData.username,
+      lastSeen: Date.now(),
+    };
+    db.set("sessions", sessions);
+  }
 
-cookies.unset = function(req, res, postData) {
-  if (!req.headers.cookie) return;
-  const session = cookies.parse(req.headers.cookie).s;
-  if (!session) return;
-  const sessions = db.get("sessions");
-  delete sessions[session];
-  db.set("sessions", sessions);
-  res.setHeader("Set-Cookie", cookieHeaders("gone", postData.path, epoch()));
-};
+  unset(req, res, postData) {
+    if (!req.headers.cookie) {
+      return;
+    }
 
-function inOneYear() {
-  return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
-}
+    const session = this.parse(req.headers.cookie).s;
+    if (!session) {
+      return;
+    }
 
-function epoch() {
-  return new Date(0).toUTCString();
-}
+    const sessions = db.get("sessions");
+    delete sessions[session];
+    db.set("sessions", sessions);
+    res.setHeader(
+      "Set-Cookie",
+      this.cookieHeaders("gone", postData.path, this.epoch())
+    );
+  }
 
-function cookieHeaders(sid, path, expires) {
-  const realCookie = {s: sid, path: path || "/"};
-  const deleteCookie = {s: "gone", expires: epoch(), path: "/"};
-  if (path === "/" || !path) {
-    if (expires) realCookie.expires = inOneYear();
-    return cookieString(realCookie);
-  } else {
-        // expire a possible invalid old cookie on the / path
-    if (expires) realCookie.expires = inOneYear();
-    return [cookieString(deleteCookie), cookieString(realCookie)];
+  inOneYear() {
+    return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+  }
+
+  epoch() {
+    return new Date(0).toUTCString();
+  }
+
+  cookieHeaders(sid, path, expires) {
+    const realCookie = { s: sid, path: path || "/" };
+    const deleteCookie = { s: "gone", expires: this.epoch(), path: "/" };
+    if (path === "/" || !path) {
+      if (expires) realCookie.expires = this.inOneYear();
+      return this.cookieString(realCookie);
+    } else {
+      // expire a possible invalid old cookie on the / path
+      if (expires) realCookie.expires = this.inOneYear();
+      return [this.cookieString(deleteCookie), this.cookieString(realCookie)];
+    }
+  }
+
+  cookieString(params) {
+    return Object.keys(params)
+      .map((param) => {
+        return `${param}=${params[param]}`;
+      })
+      .concat(cookieParams)
+      .join("; ");
   }
 }
 
-function cookieString(params) {
-  return Object.keys(params).map(param => {
-    return `${param}=${params[param]}`;
-  }).concat(cookieParams).join("; ");
-}
+export default new DroppyCookies();

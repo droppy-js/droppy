@@ -6,6 +6,7 @@
     "homepage": "https://github.com/droppyjs/droppy#readme",
     "license": "BSD-2-Clause",
     "main": "lib/cli.js",
+    "type": "module",
     "dependencies": {
         "@droppyjs/server": "1.0.1",
         "daemonize-process": "^3.0.0",

@@ -1,8 +1,8 @@
-const filetree = require("../services/filetree");
-const log = require("../services/log");
+import filetree from "../services/filetree.js";
+import log from "../services/log.js";
 
-exports.default = {
-  handler: async ({validatePaths, sid, config, msg, ws, vId, sendError}) => {
+export default {
+  handler: async ({ validatePaths, sid, config, msg, ws, vId, sendError }) => {
     if (config.readOnly) {
       log.info(ws, null, `Prevent deleting read-only file: ${msg.data}`);
       return sendError(sid, vId, "Files are read-only");
@@ -13,5 +13,5 @@ exports.default = {
     }
     log.info(ws, null, `Deleting: ${msg.data}`);
     filetree.del(msg.data);
-  }
+  },
 };

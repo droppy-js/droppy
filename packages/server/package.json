@@ -6,6 +6,7 @@
     "homepage": "https://github.com/droppyjs/droppy#readme",
     "license": "BSD-2-Clause",
     "main": "lib/index.js",
+    "type": "module",
     "directories": {
         "lib": "lib",
         "test": "__tests__"
@@ -60,9 +61,9 @@
         "yazl": "2.5.1"
     },
     "devDependencies": {
-        "eslint": "7.7.0",
-        "eslint-config-silverwind": "18.0.2",
-        "eslint-plugin-unicorn": "21.0.0",
+        "eslint": "9.11.1",
+        "eslint-config-silverwind": "91.0.6",
+        "eslint-plugin-unicorn": "55.0.0",
         "lerna": "^3.22.1",
         "updates": "10.3.5"
     },

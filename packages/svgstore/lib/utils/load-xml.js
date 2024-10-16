@@ -5,12 +5,10 @@
 
 "use strict";
 
-const cheerio = require("cheerio");
+import { load } from "cheerio";
 
-function loadXml(text) {
-  return cheerio.load(text, {
-    xmlMode: true
+export default function loadXml(text) {
+  return load(text, {
+    xmlMode: true,
   });
 }
-
-module.exports = loadXml;

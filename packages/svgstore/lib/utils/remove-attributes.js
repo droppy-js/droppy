@@ -5,7 +5,7 @@
 
 "use strict";
 
-function removeAttributes(el, attrs) {
+export default function removeAttributes(el, attrs) {
   let localAttrs = attrs;
 
   if (localAttrs === true) {
@@ -18,7 +18,7 @@ function removeAttributes(el, attrs) {
 
   const els = el.find("*");
 
-  els.each((i, _el) => {
+  els.each((i) => {
     localAttrs.forEach((attr) => {
       els.eq(i).removeAttr(attr);
     });
@@ -26,5 +26,3 @@ function removeAttributes(el, attrs) {
 
   return el;
 }
-
-module.exports = removeAttributes;
