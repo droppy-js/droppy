@@ -14,6 +14,8 @@ import { server, paths, resources, log, cfg, db } from "@droppyjs/server";
 
 import minimist from "minimist";
 
+import daemonize from 'daemonize-process';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -58,7 +60,7 @@ if (argv.v || argv.V || argv.version) {
 }
 
 if (argv.daemon || argv.d) {
-  require("daemonize-process")();
+  daemonize();
 }
 
 if (argv.configdir || argv.filesdir || argv.c || argv.f) {
