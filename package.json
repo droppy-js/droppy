@@ -58,6 +58,7 @@
         "@babel/core": "^7",
         "@babel/eslint-parser": "^7.25.1",
         "@babel/plugin-syntax-import-assertions": "^7.25.6",
+        "@babel/preset-env": "^7.25.4",
         "@eslint/eslintrc": "^3.1.0",
         "@eslint/js": "^9.11.1",
         "babel-jest": "^29.7.0",
