@@ -23,7 +23,14 @@ export default {
       sendError(sid, vId, "Invalid rename request");
       return;
     }
-    filetree.move(rSrc, rDst);
+
+    try {
+      await filetree.move(rSrc, rDst);
+    } catch (err) {
+      log.error(ws, null, err);
+      sendError(sid, vId, `Error renaming ${rSrc} to ${rDst}`);
+      return;
+    }
 
     // update sharelinks to new destination
     const links = db.get("links");

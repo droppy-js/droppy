@@ -10,9 +10,17 @@ export default {
     const src = msg.data.src;
     const dst = msg.data.dst;
     const type = msg.data.type;
+
     log.info(ws, null, `Clipboard ${type}: ${src} -> ${dst}`);
-    if (config.readOnly) return sendError(sid, vId, "Files are read-only");
-    if (!validatePaths([src, dst], msg.type, ws, sid, vId)) return;
+
+    if (config.readOnly) {
+      return sendError(sid, vId, "Files are read-only");
+    }
+
+    if (!validatePaths([src, dst], msg.type, ws, sid, vId)) {
+      return;
+    }
+
     if (new RegExp(`^${escRe(msg.data.src)}/`).test(msg.data.dst)) {
       return sendError(sid, vId, "Can't copy directory into itself");
     }

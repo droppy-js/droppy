@@ -1,10 +1,10 @@
 "use strict";
 
-import fs from "fs";
+import fs from "fs/promises";
+import { createWriteStream } from 'fs';
 import os from "os";
 import path from "path";
 import { promisify } from "util";
-import { readFile } from "fs/promises";
 
 import throttle from "lodash.throttle";
 import busboy from "busboy";
@@ -66,17 +66,11 @@ export default async function droppy(opts, isStandalone, dev, callback) {
   setupProcess(isStandalone);
 
   try {
-    await promisify((cb) => {
-      utils.mkdir([paths.get().files, paths.get().config], cb);
-    })();
+    await utils.mkdir([paths.get().files, paths.get().config]);
 
-    await promisify((cb) => {
-      if (isStandalone) {
-        fs.writeFile(paths.get().pid, String(process.pid), cb);
-      } else {
-        cb();
-      }
-    })();
+    if (isStandalone) {
+      await fs.writeFile(paths.get().pid, String(process.pid));
+    }
 
     config = await cfg.init(opts);
     if (dev) {
@@ -119,15 +113,15 @@ export default async function droppy(opts, isStandalone, dev, callback) {
       } else cb();
     })();
 
-    await promisify((cb) => {
-      log.info("Caching files ...");
-      filetree.init(config);
-      filetree.updateDir(null).then(() => {
-        if (config.watch) filetree.watch();
-        log.info("Caching files done");
-        cb();
-      });
-    })();
+    log.info("Caching files ...");
+    filetree.init(config);
+    await filetree.updateDir(null);
+    if (config.watch) {
+      filetree.watch();
+    }
+
+    log.info("Caching files done");
+
 
     await promisify((cb) => {
       if (typeof config.keepAlive === "number" && config.keepAlive > 0) {
@@ -234,7 +228,7 @@ async function startListeners(callback) {
       }
 
       try {
-        fs.unlinkSync(socket);
+        fs.unlink(socket);
       } catch (err) {
         if (err.code !== "ENOENT") {
           return callback(
@@ -282,7 +276,7 @@ async function startListeners(callback) {
             return resolve();
           }
 
-          server.on("listening", () => {
+          server.on("listening", async () => {
             server.removeAllListeners("error");
             listenerCount++;
             setupWebSocket(server);
@@ -290,7 +284,7 @@ async function startListeners(callback) {
 
             if (target.socket) {
               // socket
-              fs.chmodSync(target.socket, 0o666); // make it rw
+              await fs.chmod(target.socket, 0o666); // make it rw
               // a unix socket URL should normally percent-encode the path, but
               // we're printing a path-less URL so pretty-print it with slashes.
               log.info(
@@ -639,7 +633,7 @@ function send(ws, data) {
   })(ws, data, 0);
 }
 
-function handleGETandHEAD(req, res) {
+async function handleGETandHEAD(req, res) {
   const URI = decodeURIComponent(req.url);
 
   if (config.public && !cookies.get(req.headers.cookie)) {
@@ -703,16 +697,26 @@ function handleGETandHEAD(req, res) {
     handleFileRequest(req, res, false);
   } else if (/^\/!\/zip\/[\s\S]+/.test(URI)) {
     const zipPath = utils.addFilesPath(URI.substring(6));
-    fs.stat(zipPath, (err, stats) => {
-      if (!err && stats.isDirectory()) {
-        streamArchive(req, res, zipPath, true, stats, false);
-      } else {
-        if (err) log.error(err);
-        res.statusCode = 404;
-        res.end();
-        log.info(req, res);
-      }
-    });
+
+    /**
+     * @type {import("fs").Stats}
+     */
+    let stats = null;
+
+    try {
+      stats = await fs.stat(zipPath);
+    } catch (err) {
+      log.error(err);
+    }
+
+    if (stats && stats.isDirectory()) {
+      streamArchive(req, res, zipPath, true, stats, false);
+    } else {
+      res.statusCode = 404;
+      res.end();
+      log.info(req, res);
+    }
+
   } else {
     redirectToRoot(req, res);
   }
@@ -946,7 +950,7 @@ function handleResourceRequest(req, res, resourceName) {
   log.info(req, res);
 }
 
-function handleFileRequest(req, res, download) {
+async function handleFileRequest(req, res, download) {
   const URI = decodeURIComponent(req.url);
   let shareLink, filepath;
 
@@ -971,26 +975,28 @@ function handleFileRequest(req, res, download) {
     filepath = utils.addFilesPath(`/${[parts[2]]}`);
   }
 
-  fs.stat(filepath, (error, stats) => {
-    if (!error && stats) {
-      if (stats.isDirectory() && shareLink) {
-        streamArchive(req, res, filepath, download, stats, shareLink);
-      } else {
-        streamFile(req, res, filepath, download, stats, shareLink);
-      }
+  try {
+    const stats = await fs.stat(filepath);
+
+    if (stats.isDirectory() && shareLink) {
+      streamArchive(req, res, filepath, download, stats, shareLink);
     } else {
-      if (error.code === "ENOENT") {
-        res.statusCode = 404;
-      } else if (error.code === "EACCES") {
-        res.statusCode = 403;
-      } else {
-        res.statusCode = 500;
-      }
-      log.error(error);
-      res.end();
+      streamFile(req, res, filepath, download, stats, shareLink);
     }
-    log.info(req, res);
-  });
+
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      res.statusCode = 404;
+    } else if (err.code === "EACCES") {
+      res.statusCode = 403;
+    } else {
+      res.statusCode = 500;
+    }
+    log.error(err);
+    res.end();
+  }
+
+  log.info(req, res);
 }
 
 async function handleTypeRequest(req, res, file) {
@@ -1097,28 +1103,31 @@ function handleUploadRequest(req, res) {
 
     const dst = utils.addFilesPath(path.join(dstDir, tmpPath));
 
-    utils.mkdir(path.dirname(dst), () => {
-      fs.stat(dst, (err) => {
-        if (err && err.code === "ENOENT") {
-          const ws = fs.createWriteStream(dst, { mode: "644" });
-          ws.on("error", onWriteError);
-          file.pipe(ws);
-        } else if (!err) {
-          if (req.query.rename === "1") {
-            utils.getNewPath(dst, (newDst) => {
-              const ws = fs.createWriteStream(newDst, { mode: "644" });
-              ws.on("error", onWriteError);
-              file.pipe(ws);
-            });
-          } else {
-            const ws = fs.createWriteStream(dst, { mode: "644" });
+    utils.mkdir(path.dirname(dst)).then(async () => {
+      try {
+
+        await fs.stat(dst);
+
+        if (req.query.rename === "1") {
+          utils.getNewPath(dst, (newDst) => {
+            const ws = createWriteStream(newDst, { mode: "644" });
             ws.on("error", onWriteError);
             file.pipe(ws);
-          }
+          });
+        } else {
+          const ws = createWriteStream(dst, { mode: "644" });
+          ws.on("error", onWriteError);
+          file.pipe(ws);
+        }
+      } catch (err) {
+        if (err && err.code === "ENOENT") {
+          const ws = createWriteStream(dst, { mode: "644" });
+          ws.on("error", onWriteError);
+          file.pipe(ws);
         } else {
           onWriteError(err);
         }
-      });
+      }
     });
   });
 
@@ -1264,35 +1273,47 @@ function cleanupLinks(callback) {
   if (Object.keys(links).length === 0) {
     callback();
   } else {
-    Object.keys(links).forEach((link) => {
+    Object.keys(links).forEach(async (link) => {
       linkcount++;
-      (function (shareLink, location) {
-        // check for links not matching the configured length
-        if (shareLink.length !== config.linkLength) {
-          log.debug(
-            `deleting link not matching the configured length: ${shareLink}`
-          );
-          delete links[shareLink];
-          if (++cbcount === linkcount) {
-            db.set("links", links);
-            callback();
-          }
-          return;
+
+      const shareLink = link;
+      const location = links[link].location;
+
+      // check for links not matching the configured length
+      if (shareLink.length !== config.linkLength) {
+        log.debug(
+          `deleting link not matching the configured length: ${shareLink}`
+        );
+        delete links[shareLink];
+        if (++cbcount === linkcount) {
+          db.set("links", links);
+          callback();
         }
-        // check for links where the target does not exist anymore
-        fs.stat(path.join(paths.get().files, location), (error, stats) => {
-          if (!stats || error) {
-            log.debug(`deleting nonexistant link: ${shareLink}`);
-            delete links[shareLink];
-          }
-          if (++cbcount === linkcount) {
-            if (JSON.stringify(links) !== JSON.stringify(db.get("links"))) {
-              db.set("links", links);
-            }
-            callback();
-          }
-        });
-      })(link, links[link].location);
+        return;
+      }
+      // check for links where the target does not exist anymore
+
+      /**
+       * @type {import("fs").Stats}
+       */
+      let stats;
+      try {
+        stats = await fs.stat(path.join(paths.get().files, location));
+      } catch {
+        // Ignore error
+      }
+
+      if (!stats) {
+        log.debug(`deleting nonexistant link: ${shareLink}`);
+        delete links[shareLink];
+      }
+
+      if (++cbcount === linkcount) {
+        if (JSON.stringify(links) !== JSON.stringify(db.get("links"))) {
+          db.set("links", links);
+        }
+        callback();
+      }
     });
   }
 }
@@ -1439,11 +1460,11 @@ async function tlsSetup(opts, cb) {
     return cb(new Error("Missing TLS option 'cert'"));
   }
 
-  const cert = await readFile(
+  const cert = await fs.readFile(
     path.resolve(paths.get().config, ut(opts.cert)),
     "utf8"
   );
-  const key = await readFile(
+  const key = await fs.readFile(
     path.resolve(paths.get().config, ut(opts.key)),
     "utf8"
   );
@@ -1476,11 +1497,15 @@ function setupProcess(standalone) {
     process.on("SIGTERM", endProcess.bind(null, "SIGTERM"));
     process.on("unhandledRejection", (error) => {
       log.error(error);
-      if (dieOnError) process.exit(1);
+      if (dieOnError) {
+        process.exit(1);
+      }
     });
     process.on("uncaughtException", (error) => {
       log.error(error);
-      if (dieOnError) process.exit(1);
+      if (dieOnError) {
+        process.exit(1);
+      }
     });
   }
 }
@@ -1490,15 +1515,22 @@ function endProcess(signal) {
   let count = 0;
   log.info(`Received ${red(signal)} - Shutting down ...`);
   Object.keys(clients).forEach((sid) => {
-    if (!clients[sid] || !clients[sid].ws) return;
+    if (!clients[sid] || !clients[sid].ws) {
+      return;
+    }
+
     if (clients[sid].ws.readyState < 2) {
       count++;
       clients[sid].ws.close(1001);
     }
   });
-  if (count > 0) log.info(`Closed ${count} WebSocket${count > 1 ? "s" : ""}`);
+
+  if (count > 0) {
+    log.info(`Closed ${count} WebSocket${count > 1 ? "s" : ""}`);
+  }
+
   try {
-    fs.unlinkSync(paths.get().pid);
+    fs.unlink(paths.get().pid);
   } catch {
     // Fail silently
   }

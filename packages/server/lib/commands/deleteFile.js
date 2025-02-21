@@ -12,6 +12,13 @@ export default {
       return;
     }
     log.info(ws, null, `Deleting: ${msg.data}`);
-    filetree.del(msg.data);
+
+    try {
+      await filetree.del(msg.data);
+    } catch (err) {
+      log.info(ws, null, `Error deleting file: ${msg.data}`);
+      log.error(err);
+      return sendError(sid, vId, "Error deleting file");
+    }
   },
 };

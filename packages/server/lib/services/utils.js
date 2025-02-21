@@ -55,7 +55,9 @@ class DroppyUtils {
     for (const d of Array.isArray(dir) ? dir : [dir]) {
       await mkdir(d, { mode: "755", recursive: true });
     }
-    cb();
+    if (cb) {
+      cb();
+    }
   }
 
   rm(p, cb) {
