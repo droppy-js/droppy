@@ -3,11 +3,11 @@
 import debounce from "lodash.debounce";
 import chokidar from "chokidar";
 import escRe from "escape-string-regexp";
-import fs from "fs";
+import fs from "fs/promises";
+
 import path from "path";
 import rrdir from "rrdir";
 import rfdc from "rfdc";
-import util from "util";
 
 import log from "./log.js";
 import paths from "./paths.js";
@@ -16,7 +16,6 @@ import utils from "./utils.js";
 import { EventEmitter } from "events";
 
 const clone = rfdc();
-const lstat = util.promisify(fs.lstat);
 
 let dirs = {};
 let todoDirs = [];
@@ -67,7 +66,7 @@ class DroppyFileTree extends EventEmitter {
 
     let stats;
     try {
-      stats = await lstat(fullDir);
+      stats = await fs.lstat(fullDir);
     } catch (err) {
       log.error(err);
     }
@@ -114,179 +113,266 @@ class DroppyFileTree extends EventEmitter {
     this.updateDirInCache(dir, stats, readDirs, readFiles);
   }
 
-  del(dir) {
-    fs.stat(utils.addFilesPath(dir), (err, stats) => {
-      if (err) {
-        log.error(err);
-      }
-      if (!stats) {
-        return;
-      }
+  async del(dir) {
+    /**
+     * @type {fs.Stats}
+     */
+    let stats;
+    try {
+      stats = await fs.stat(utils.addFilesPath(dir));
+    } catch (err) {
+      log.error(err);
 
-      if (stats.isFile()) {
-        this.unlink(dir);
-      } else if (stats.isDirectory()) {
-        this.unlinkdir(dir);
-      }
-    });
+      throw err;
+    }
+
+    if (stats.isFile()) {
+      await this.unlink(dir);
+    } else if (stats.isDirectory()) {
+      await this.unlinkdir(dir);
+    } else {
+      throw new Error("Invalid file type");
+    }
   }
 
   unlink(dir) {
     this.lookAway();
-    utils.rm(utils.addFilesPath(dir), (err) => {
-      if (err) log.error(err);
-      delete dirs[path.dirname(dir)].files[path.basename(dir)];
-      this.update(path.dirname(dir));
+
+    // TODO: remove new promise, change to async when utils.rm is async
+    return new Promise((resolve, reject) => {
+      utils.rm(utils.addFilesPath(dir), (err) => {
+        if (err) {
+          log.error(err);
+          reject(err);
+        }
+
+        delete dirs[path.dirname(dir)].files[path.basename(dir)];
+        this.update(path.dirname(dir));
+        resolve();
+      });
     });
   }
 
   unlinkdir(dir) {
     this.lookAway();
-    utils.rmdir(utils.addFilesPath(dir), (err) => {
-      if (err) log.error(err);
-      delete dirs[dir];
-      Object.keys(dirs).forEach((d) => {
-        if (new RegExp(`^${escRe(dir)}/`).test(d)) delete dirs[d];
-      });
-      this.update(path.dirname(dir));
-    });
-  }
 
-  clipboard(src, dst, type) {
-    fs.stat(utils.addFilesPath(src), (err, stats) => {
-      this.lookAway();
-      if (err) log.error(err);
-      if (stats.isFile()) {
-        this[type === "cut" ? "mv" : "cp"](src, dst);
-      } else if (stats.isDirectory()) {
-        this[type === "cut" ? "mvdir" : "cpdir"](src, dst);
-      }
-    });
-  }
-
-  mk(dir, cb) {
-    this.lookAway();
-    fs.stat(utils.addFilesPath(dir), (err) => {
-      if (err && err.code === "ENOENT") {
-        fs.open(utils.addFilesPath(dir), "wx", (err, fd) => {
-          if (err) {
-            log.error(err);
-            if (cb) cb(err);
-            return;
-          }
-          fs.close(fd, (error) => {
-            if (error) log.error(error);
-            dirs[path.dirname(dir)].files[path.basename(dir)] = {
-              size: 0,
-              mtime: Date.now(),
-            };
-            this.update(path.dirname(dir));
-            if (cb) cb();
-          });
-        });
-      } else if (err) {
-        log.error(err);
-        if (cb) cb(err);
-      } else {
-        if (cb) cb();
-      }
-    });
-  }
-
-  mkdir(dir, cb) {
-    this.lookAway();
-    fs.stat(utils.addFilesPath(dir), (err) => {
-      if (err && err.code === "ENOENT") {
-        utils.mkdir(utils.addFilesPath(dir), (err) => {
-          if (err) {
-            log.error(err);
-            if (cb) cb(err);
-            return;
-          }
-          dirs[dir] = { files: {}, size: 0, mtime: Date.now() };
-          this.update(path.dirname(dir));
-          if (cb) cb();
-        });
-      } else if (err) {
-        log.error(err);
-        if (cb) cb(err);
-      } else {
-        if (cb) cb();
-      }
-    });
-  }
-
-  move(src, dst, cb) {
-    this.lookAway();
-    fs.stat(utils.addFilesPath(src), (err, stats) => {
-      if (err) log.error(err);
-      if (stats.isFile()) {
-        this.mv(src, dst, cb);
-      } else if (stats.isDirectory()) {
-        this.mvdir(src, dst, cb);
-      }
-    });
-  }
-
-  mv(src, dst, cb) {
-    this.lookAway();
-    utils.move(utils.addFilesPath(src), utils.addFilesPath(dst), (err) => {
-      if (err) log.error(err);
-      dirs[path.dirname(dst)].files[path.basename(dst)] =
-        dirs[path.dirname(src)].files[path.basename(src)];
-      delete dirs[path.dirname(src)].files[path.basename(src)];
-      this.update(path.dirname(src));
-      this.update(path.dirname(dst));
-      if (cb) cb();
-    });
-  }
-
-  mvdir(src, dst, cb) {
-    this.lookAway();
-    utils.move(utils.addFilesPath(src), utils.addFilesPath(dst), (err) => {
-      if (err) log.error(err);
-      // Basedir
-      dirs[dst] = dirs[src];
-      delete dirs[src];
-      // Subdirs
-      Object.keys(dirs).forEach((dir) => {
-        if (
-          new RegExp(`^${escRe(src)}/`).test(dir) &&
-          dir !== src &&
-          dir !== dst
-        ) {
-          dirs[dir.replace(new RegExp(`^${escRe(src)}/`), `${dst}/`)] =
-            dirs[dir];
-          delete dirs[dir];
+    // TODO: remove new promise, change to async when utils.rmdir is async
+    return new Promise((resolve, reject) => {
+      utils.rmdir(utils.addFilesPath(dir), (err) => {
+        if (err) {
+          log.error(err);
+          reject(err);
         }
+
+        delete dirs[dir];
+        Object.keys(dirs).forEach((d) => {
+          if (new RegExp(`^${escRe(dir)}/`).test(d)) {
+            delete dirs[d];
+          }
+        });
+
+        this.update(path.dirname(dir));
+        resolve();
       });
-      this.update(path.dirname(src));
-      this.update(path.dirname(dst));
-      if (cb) cb();
     });
   }
 
-  cp(src, dst, cb) {
+  async clipboard(src, dst, type) {
+    /**
+     * @type {fs.Stats}
+     */
+    let stats;
+
+    try {
+      stats = await fs.stat(utils.addFilesPath(src));
+    } catch (err) {
+      log.error(err);
+
+      throw err;
+    }
+
     this.lookAway();
-    utils.copyFile(utils.addFilesPath(src), utils.addFilesPath(dst), () => {
-      dirs[path.dirname(dst)].files[path.basename(dst)] = clone(
-        dirs[path.dirname(src)].files[path.basename(src)]
-      );
-      dirs[path.dirname(dst)].files[path.basename(dst)].mtime = Date.now();
-      this.update(path.dirname(dst));
-      if (cb) {
-        cb();
+
+    /**
+     * @type {Function}
+     */
+    let callable;
+
+    if (stats.isFile()) {
+      if (type === "cut") {
+        await this.mv(src, dst);
+      } else {
+        await this.cp(src, dst);
       }
+    } else if (stats.isDirectory()) {
+      if (type === "cut") {
+        await this.mvdir(src, dst);
+      } else {
+        await this.cpdir(src, dst);
+      }
+    }
+
+    return callable(src, dst);
+  }
+
+  async mk(dir) {
+    this.lookAway();
+
+    try {
+      await fs.stat(utils.addFilesPath(dir));
+    } catch (err) {
+      if (err && err.code === "ENOENT") {
+        const fd = await fs.open(utils.addFilesPath(dir), "wx");
+
+        await fs.close(fd);
+
+        dirs[path.dirname(dir)].files[path.basename(dir)] = {
+          size: 0,
+          mtime: Date.now(),
+        };
+
+        this.update(path.dirname(dir));
+      } else {
+        log.error(err);
+
+        throw err;
+      }
+    }
+  }
+
+  async mkdir(dir) {
+    this.lookAway();
+
+    try {
+      await fs.stat(utils.addFilesPath(dir));
+    } catch (err) {
+      if (err?.code !== "ENOENT") {
+        log.error(err);
+        throw err;
+      }
+
+      await utils.mkdir(utils.addFilesPath(dir));
+
+      dirs[dir] = { files: {}, size: 0, mtime: Date.now() };
+      this.update(path.dirname(dir));
+    }
+  }
+
+  async move(src, dst) {
+    this.lookAway();
+
+    try {
+      const stats = await fs.stat(utils.addFilesPath(src));
+
+      if (stats.isFile()) {
+        await this.mv(src, dst);
+      } else if (stats.isDirectory()) {
+        await this.mvdir(src, dst);
+      }
+    } catch (err) {
+      log.error(err);
+
+      throw err;
+    }
+  }
+
+  mv(src, dst) {
+    this.lookAway();
+
+    return new Promise((resolve, reject) => {
+      // TODO: asjust to async/await when utils.move is async
+      utils.move(utils.addFilesPath(src), utils.addFilesPath(dst), (err) => {
+        if (err) {
+          log.error(err);
+
+          reject(err);
+        }
+
+        dirs[path.dirname(dst)].files[path.basename(dst)] =
+          dirs[path.dirname(src)].files[path.basename(src)];
+
+        delete dirs[path.dirname(src)].files[path.basename(src)];
+
+        this.update(path.dirname(src));
+        this.update(path.dirname(dst));
+
+        resolve();
+      });
     });
   }
 
-  async cpdir(src, dst, cb) {
+  mvdir(src, dst) {
+    this.lookAway();
+
+    return new Promise((resolve, reject) => {
+      // TODO: asjust to async/await when utils.move is async
+      utils.move(utils.addFilesPath(src), utils.addFilesPath(dst), (err) => {
+        if (err) {
+          log.error(err);
+
+          reject(err);
+        }
+
+        dirs[dst] = dirs[src];
+        delete dirs[src];
+
+        Object.keys(dirs).forEach((dir) => {
+          if (
+            new RegExp(`^${escRe(src)}/`).test(dir) &&
+            dir !== src &&
+            dir !== dst
+          ) {
+            dirs[dir.replace(new RegExp(`^${escRe(src)}/`), `${dst}/`)] =
+              dirs[dir];
+            delete dirs[dir];
+          }
+        });
+
+        this.update(path.dirname(src));
+        this.update(path.dirname(dst));
+
+        resolve();
+      });
+    });
+  }
+
+  cp(src, dst) {
+    this.lookAway();
+
+    return new Promise((resolve, reject) => {
+      utils.copyFile(
+        utils.addFilesPath(src),
+        utils.addFilesPath(dst),
+        (err) => {
+          if (err) {
+            log.error(err);
+
+            reject(err);
+            return;
+          }
+
+          dirs[path.dirname(dst)].files[path.basename(dst)] = clone(
+            dirs[path.dirname(src)].files[path.basename(src)]
+          );
+
+          dirs[path.dirname(dst)].files[path.basename(dst)].mtime = Date.now();
+
+          this.update(path.dirname(dst));
+
+          resolve();
+        }
+      );
+    });
+  }
+
+  async cpdir(src, dst) {
     this.lookAway();
     await utils.copyDir(utils.addFilesPath(src), utils.addFilesPath(dst));
 
     // Basedir
     dirs[dst] = clone(dirs[src]);
     dirs[dst].mtime = Date.now();
+
     // Subdirs
     Object.keys(dirs).forEach((dir) => {
       if (
@@ -301,23 +387,29 @@ class DroppyFileTree extends EventEmitter {
           Date.now();
       }
     });
+
     this.update(path.dirname(dst));
-    if (cb) cb();
   }
 
-  save(dst, data, cb) {
+  async save(dst, data) {
     this.lookAway();
-    fs.stat(utils.addFilesPath(dst), (err) => {
-      if (err && err.code !== "ENOENT") return cb(err);
-      fs.writeFile(utils.addFilesPath(dst), data, (err) => {
-        dirs[path.dirname(dst)].files[path.basename(dst)] = {
-          size: Buffer.byteLength(data),
-          mtime: Date.now(),
-        };
-        this.update(path.dirname(dst));
-        if (cb) cb(err);
-      });
-    });
+    try {
+      await fs.stat(utils.addFilesPath(dst));
+    } catch (err) {
+      if (err.code !== "ENOENT") {
+        log.error(err);
+        throw err;
+      }
+    }
+
+    await fs.writeFile(utils.addFilesPath(dst), data);
+
+    dirs[path.dirname(dst)].files[path.basename(dst)] = {
+      size: Buffer.byteLength(data),
+      mtime: Date.now(),
+    };
+
+    this.update(path.dirname(dst));
   }
 
   search(query, p) {
@@ -416,6 +508,7 @@ class DroppyFileTree extends EventEmitter {
 
     const readDirObj = {},
       readDirKeys = [];
+
     readDirs
       .sort((a, b) => utils.naturalSort(a.path, b.path))
       .forEach((d) => {
@@ -499,6 +592,7 @@ class DroppyFileTree extends EventEmitter {
         : path.basename(file);
       entries[name] = ["f", mtime, f.size].join("|");
     });
+
     folders.forEach((folder) => {
       if (dirs[folder]) {
         const d = dirs[folder];

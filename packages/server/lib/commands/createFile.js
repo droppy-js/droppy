@@ -8,8 +8,12 @@ export default {
     if (!validatePaths(msg.data, msg.type, ws, sid, vId)) {
       return;
     }
-    filetree.mk(msg.data, (err) => {
-      if (err) sendError(sid, vId, `Error creating file: ${err.message}`);
-    });
+
+    try {
+      await filetree.mk(msg.data);
+    } catch (err) {
+      log.error(ws, null, err);
+      sendError(sid, vId, `Error creating file: ${err.message}`);
+    }
   },
 };

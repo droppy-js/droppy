@@ -12,17 +12,13 @@ export default {
       return;
     }
 
-    await Promise.all(
-      msg.data.folders.map((folder) => {
-        return new Promise((resolve) => {
-          filetree.mkdir(utils.addFilesPath(folder), (err) => {
-            if (err) {
-              log.error(ws, null, err);
-            }
-            resolve();
-          });
-        });
-      })
-    );
+    for (const folder of msg.data.folders) {
+      try {
+        await filetree.mkdir(utils.addFilesPath(folder));
+      } catch (err) {
+        log.error(ws, null, err);
+        sendError(sid, vId, `Error creating folder ${folder}`);
+      }
+    }
   },
 };

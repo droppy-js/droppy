@@ -23,11 +23,15 @@ export default {
 
     log.info(ws, null, `Saving: ${msg.data.to}`);
 
-    filetree.save(msg.data.to, msg.data.value, (err) => {
-      if (err) {
-        sendError(sid, vId, `Error saving: ${err.message}`);
-        log.error(err);
-      } else sendObj(sid, { type: "SAVE_STATUS", vId, status: err ? 1 : 0 });
-    });
+    try {
+      await filetree.save(msg.data.to, msg.data.value);
+    } catch (err) {
+      sendObj(sid, { type: "SAVE_STATUS", vId, status: 1 });
+      sendError(sid, vId, `Error saving: ${err.message}`);
+      log.error(err);
+      return;
+    }
+
+    sendObj(sid, { type: "SAVE_STATUS", vId, status: 0 });
   },
 };

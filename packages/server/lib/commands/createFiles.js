@@ -13,18 +13,14 @@ export default {
       return;
     }
 
-    await Promise.all(
-      msg.data.files.map((file) => {
-        return new Promise((resolve) => {
-          filetree.mkdir(utils.addFilesPath(path.dirname(file)), (err) => {
-            if (err) log.error(ws, null, err);
-            filetree.mk(utils.addFilesPath(file), (err) => {
-              if (err) log.error(ws, null, err);
-              resolve();
-            });
-          });
-        });
-      })
-    );
+    for (const file of msg.data.files) {
+      try {
+        await filetree.mkdir(utils.addFilesPath(path.dirname(file)));
+        await filetree.mk(utils.addFilesPath(file));
+      } catch (err) {
+        log.error(ws, null, err);
+        sendError(sid, vId, `Error creating file`);
+      }
+    }
   },
 };
